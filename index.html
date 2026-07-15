@@ -3527,68 +3527,121 @@ function printProcurement() {
 
 // ── End TCO Calculator ─────────────────────────────────────────────────────
 
+// ── Unified URL state (consolidated 2026-07) ────────────────────────────────
+// One canonical schema is written by BOTH the Share button and address-bar
+// persistence, and the reader also accepts both legacy vocabularies:
+//   canonical: g, p, v, prov, gc, gcv, eg, egv, cm, dm, ay, cx
+//   legacy v1 (old Share links):  gpu, mode (name), prov, gc, gcv, eg, egv
+//   legacy v2 (old address bar):  g, v, p, cm, dm, n (raw count), ay, cx
 function encodeState() {
-  const providers = [...visibleProviders].join(',');
-  const params = new URLSearchParams({
-    gpu:     gpuType,
-    mode:    pricingMode,
-    prov:    providers,
-    gc:      gpuCountTierIdx,
-    gcv:     gpuCountCustom,
-    eg:      egressTierIdx,
-    egv:     egressCustomTB,
-  });
-  return params.toString();
+  const p = new URLSearchParams();
+  p.set('g', gpuType);
+  p.set('p', PRICING_MODES.indexOf(pricingMode));
+  if (viewMode === 'perflop') p.set('v', 'perflop');
+  p.set('prov', [...visibleProviders].sort().join(','));
+  if (gpuCountTierIdx > 0) {
+    p.set('gc', gpuCountTierIdx);
+    if (gpuCountTierIdx === 6) p.set('gcv', gpuCountCustom);
+  }
+  if (egressTierIdx > 0) {
+    p.set('eg', egressTierIdx);
+    if (egressTierIdx === 3) p.set('egv', egressCustomTB);
+  }
+  if (currentColoMetro   !== 'ashburn') p.set('cm', currentColoMetro);
+  if (currentCorpDcMetro !== 'nynj')    p.set('dm', currentCorpDcMetro);
+  if (amortHours !== 26280) p.set('ay', Math.round(amortHours / 8760));
+  if (capexOverride[gpuType] != null) p.set('cx', capexOverride[gpuType]);
+  return p.toString();
 }
 
 function restoreState(search) {
   try {
-    const p = new URLSearchParams(search);
-    // GPU type
-    const gpu = p.get('gpu');
-    if (gpu) setGpuType(gpu);
-    // Pricing mode
-    const modeMap = { ondemand:0, committed:1, committed3yr:2, spot:3 };
-    const mode = p.get('mode');
-    if (mode && modeMap[mode] !== undefined) {
-      sliderRange.value = modeMap[mode];
-      applyPricingMode(modeMap[mode]);
+    const q = new URLSearchParams(search);
+    const pick = (...names) => {
+      for (const n of names) { const v = q.get(n); if (v !== null && v !== '') return v; }
+      return null;
+    };
+
+    // Hardware assumptions first so colo/corp-dc rows are built with them
+    const ay = parseInt(pick('ay'));
+    if (!isNaN(ay)) amortHours = Math.min(5, Math.max(1, ay)) * 8760;
+
+    // GPU type — canonical 'g', legacy v1 'gpu'. Capex override rides with it.
+    const g  = pick('g', 'gpu');
+    const cx = parseFloat(pick('cx'));
+    if (g && HW_CAPEX[g]) {
+      if (!isNaN(cx) && cx >= 5000) capexOverride[g] = cx;
+      setGpuType(g);
     }
-    // Visible providers
-    const prov = p.get('prov');
+
+    // View mode (canonical/legacy-v2 'v')
+    if (pick('v') === 'perflop') setViewMode('perflop');
+
+    // Pricing mode — canonical 'p' (index), legacy v1 'mode' (name)
+    const modeMap = { ondemand:0, committed:1, committed3yr:2, spot:3 };
+    let pIdx = parseInt(pick('p'));
+    if (isNaN(pIdx)) {
+      const m = pick('mode');
+      pIdx = (m != null && modeMap[m] !== undefined) ? modeMap[m] : NaN;
+    }
+    if (!isNaN(pIdx) && pIdx >= 0 && pIdx <= 3) {
+      sliderRange.value = pIdx;
+      applyPricingMode(pIdx);
+    }
+
+    // Visible providers (shared by canonical and legacy v1)
+    const prov = pick('prov');
     if (prov) {
       visibleProviders.clear();
       prov.split(',').forEach(pr => pr && visibleProviders.add(pr));
       syncDotVisibility();
-      // Sync checkboxes
       document.querySelectorAll('.provider-checkbox').forEach(cb => {
         cb.checked = visibleProviders.has(cb.dataset.provider);
         const lbl = cb.closest('label');
         if (lbl) lbl.classList.toggle('inactive', !cb.checked);
       });
     }
-    // GPU count
-    const gc = p.get('gc');
-    const gcv = p.get('gcv');
-    if (gc !== null) {
-      gpuCountTierIdx = parseInt(gc);
-      if (gcv !== null) gpuCountCustom = parseInt(gcv);
-      const gcRange = document.getElementById('gpuCountRange');
-      if (gcRange) { gcRange.value = gpuCountTierIdx; updateGpuCountUI(gpuCountTierIdx); }
-      const gcInput = document.getElementById('gpuCountCustom');
-      if (gcInput) gcInput.value = gpuCountCustom;
+
+    // GPU count — canonical gc/gcv (tier + custom); legacy v2 'n' (raw count)
+    let gc  = parseInt(pick('gc'));
+    let gcv = parseInt(pick('gcv'));
+    if (isNaN(gc)) {
+      const n = parseInt(pick('n'));
+      if (!isNaN(n) && n > 0) {
+        const ti = GPU_COUNT_TIERS.indexOf(n);
+        if (ti >= 0 && ti < 6) gc = ti; else { gc = 6; gcv = n; }
+      }
     }
-    // Egress
-    const eg = p.get('eg');
-    const egv = p.get('egv');
-    if (eg !== null) {
-      egressTierIdx = parseInt(eg);
-      if (egv !== null) egressCustomTB = parseInt(egv);
-      const egRange = document.getElementById('egressRange');
-      if (egRange) { egRange.value = egressTierIdx; updateEgressSliderUI(egressTierIdx); }
-      const egInput = document.getElementById('egressCustomInput');
-      if (egInput) egInput.value = egressCustomTB;
+    if (!isNaN(gc) && gc >= 0 && gc <= 6) {
+      gpuCountTierIdx = gc;
+      if (!isNaN(gcv) && gcv > 0) gpuCountCustom = gcv;
+      const r = document.getElementById('gpuCountRange');
+      if (r) { r.value = gc; updateGpuCountUI(gc); }
+      const ci = document.getElementById('gpuCountCustom');
+      if (ci) ci.value = gpuCountCustom;
     }
+
+    // Egress tier + custom TB
+    const eg  = parseInt(pick('eg'));
+    const egv = parseInt(pick('egv'));
+    if (!isNaN(eg) && eg >= 0 && eg <= 3) {
+      egressTierIdx = eg;
+      if (!isNaN(egv) && egv > 0) egressCustomTB = egv;
+      const r = document.getElementById('egressRange');
+      if (r) { r.value = eg; updateEgressSliderUI(eg); }
+      const ci = document.getElementById('egressCustomInput');
+      if (ci) ci.value = egressCustomTB;
+    }
+
+    // Metros
+    const cm = pick('cm'); if (cm && COLO_METROS[cm])    setColoMetro(cm);
+    const dm = pick('dm'); if (dm && CORP_DC_METROS[dm]) setCorpDcMetro(dm);
+
+    // Sync assumption inputs to restored values
+    const ayEl = document.getElementById('amortYears');
+    if (ayEl && !isNaN(ay)) ayEl.value = String(Math.min(5, Math.max(1, ay)));
+    if (typeof syncCapexInput === 'function') syncCapexInput();
+
     buildChart(); drawDots(); syncDotVisibility();
   } catch(e) { console.warn('State restore failed:', e); }
 }
@@ -4088,14 +4141,9 @@ function resetHwAssumptions() {
 
 function persistToURL() {
   try {
-    const p = new URLSearchParams();
-    p.set('g', gpuType); p.set('v', viewMode);
-    p.set('p', PRICING_MODES.indexOf(pricingMode));
-    p.set('cm', currentColoMetro); p.set('dm', currentCorpDcMetro);
-    if (gpuCount > 1) p.set('n', gpuCount);
-    if (amortHours !== 26280) p.set('ay', Math.round(amortHours / 8760));
-    if (capexOverride[gpuType] != null) p.set('cx', capexOverride[gpuType]);
-    history.replaceState(null, '', location.pathname + '?' + p.toString());
+    // Same canonical schema as the Share button — address bar and shared
+    // links are now identical and both carry the full state.
+    history.replaceState(null, '', location.pathname + '?' + encodeState());
   } catch (e) { /* sandboxed contexts — non-fatal */ }
 }
 let _persistT;
@@ -4105,38 +4153,17 @@ function schedulePersist() { clearTimeout(_persistT); _persistT = setTimeout(per
 (function () {
   const W = (typeof window !== 'undefined') ? window : globalThis;
   ['setGpuType','setViewMode','applyPricingMode','setColoMetro','setCorpDcMetro',
-   'applyGpuCount','applyHwAssumptions','resetHwAssumptions'].forEach(name => {
+   'applyGpuCount','applyHwAssumptions','resetHwAssumptions',
+   'applyFilter','updateGpuCountUI','updateEgressSliderUI','applyCustomEgress'].forEach(name => {
     const f = W[name];
     if (typeof f !== 'function') return;
     W[name] = function () { const r = f.apply(this, arguments); schedulePersist(); return r; };
   });
 })();
 
-// Restore from URL after the page's own boot (listener registered later runs later)
-document.addEventListener('DOMContentLoaded', () => {
-  setTimeout(() => {
-    try {
-      const p = new URLSearchParams(location.search);
-      if ([...p.keys()].length) {
-        if (p.get('ay')) amortHours = Math.min(5, Math.max(1, parseInt(p.get('ay')) || 3)) * 8760;
-        if (p.get('g') && HW_CAPEX[p.get('g')]) {
-          if (p.get('cx')) capexOverride[p.get('g')] = Math.max(5000, parseFloat(p.get('cx')) || 0) || undefined;
-          setGpuType(p.get('g'));
-        }
-        if (p.get('v') === 'perflop') setViewMode('perflop');
-        const pi = parseInt(p.get('p'));
-        if (!isNaN(pi) && pi >= 0 && pi <= 3) applyPricingMode(pi);
-        if (p.get('cm') && COLO_METROS[p.get('cm')]) setColoMetro(p.get('cm'));
-        if (p.get('dm') && CORP_DC_METROS[p.get('dm')]) setCorpDcMetro(p.get('dm'));
-        const n = parseInt(p.get('n'));
-        if (!isNaN(n) && n > 1) applyGpuCount(n);
-        const ay = document.getElementById('amortYears');
-        if (ay && p.get('ay')) ay.value = String(Math.min(5, Math.max(1, parseInt(p.get('ay')))));
-      }
-    } catch (e) { /* ignore malformed state */ }
-    syncCapexInput();
-  }, 30);
-});
+// Legacy v2 URL reader removed 2026-07 — restoreState() above now handles
+// canonical, legacy-v1, and legacy-v2 parameter vocabularies in one place.
+document.addEventListener('DOMContentLoaded', () => { syncCapexInput(); });
 </script>
 </body>
 </html>
