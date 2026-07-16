@@ -1,31 +1,28 @@
 <!DOCTYPE html>
 <!--
-  Workload Placement Strategy — v3 (2026-07-16)
-  Reskin over v2.1 to the practice identity: paper #F7F8F7 / ink #16201C,
-  emerald #0B6E4F accent, amber #9A6A1E secondary, hairline #E2E7E4,
-  Spectral + IBM Plex Mono (Plex Sans/Serif retired), muted even-luminance
-  vendor palette, eyebrow + tri-color rule header, typographic status text,
-  LOWEST tag replaces the star, quadrant corner labels, responsive controls,
-  and a ranked-list exhibit replacing the scatter below 720px
-  (buildMobileList — presentation only; pricing/TCO logic and data unchanged).
+  Copyright 2026 James E. Murphy
 
-  Workload Placement Strategy — v2.1 (2026-07-15)
-  Bug-fix release over v2. Changes:
-  · Egress free allowances now honored (per-provider freeGB; editable in assumptions)
-  · TCO stacked bars decompose the cheapest-region total (segments now sum to the label)
-  · Spot hours utilization-scaled consistently in region rows and provider rows
-  · Workload-mix sliders no longer snap to 100% of the dominant tier (mode-sync guard)
-  · Share link and URL persistence unified on one parameter set (view/metros/amort/capex included)
-  · B200 y-axis bounds updated to the refreshed price ranges (dots no longer plot off-chart)
-  · b200 source notes now served from SOURCE_NOTES (stale static spans removed)
-  · CSV: hardware amortisation table iterates HW_CAPEX (was empty via Proxy); dynamic horizon header
-  · Structural: </head> added, stray brace in print CSS removed, dead code pruned
+  Licensed under the Apache License, Version 2.0 (the "License");
+  you may not use this file except in compliance with the License.
+  You may obtain a copy of the License at
+
+      http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+
+  SPDX-License-Identifier: Apache-2.0
+
+  GPU Placement Explorer. Cost and carbon comparison across cloud, neocloud, and owned hardware.
 -->
 <html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Workload Placement Strategy</title>
+<title>GPU Placement Explorer</title>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=Spectral:ital,wght@0,300;0,400;0,500;0,600;1,400;1,500&display=swap');
   :root {
@@ -257,11 +254,10 @@
     border: none;
   }
   @media print {
-    @page { size: A4 landscape; margin: 10mm 12mm; }
-    /* ── Light theme for print ── */
+    @page { size: letter landscape; margin: 12mm 14mm; }
     body {
       background: #ffffff !important;
-      color: #111111 !important;
+      color: #16201C !important;
       -webkit-print-color-adjust: exact !important;
       print-color-adjust: exact !important;
     }
@@ -270,102 +266,106 @@
     .filters,
     .workload-type-row,
     #annotationToggleWrap,
+    #mobileRank,
     .no-print { display: none !important; }
-    /* ── Header ── */
+    /* Header */
     .header { margin-bottom: 6px !important; text-align: left !important; }
-    .header h1 { font-size: 18px !important; color: #111111 !important; }
-    .header h1 span { color: #0B6E4F !important; }
-    .header p { color: #444444 !important; font-size: 11px !important; }
-    /* ── Chart SVG — preserve dark bg so dots/labels remain readable ── */
+    .header h1 { font-family: 'Spectral', Georgia, serif !important; font-size: 19px !important; color: #16201C !important; }
+    .header p { color: #4A564F !important; font-size: 10.5px !important; }
+    .rule { max-width: 180px !important; margin: 10px 0 !important; }
+    /* Chart */
     #chartContainer {
       background: #F7F8F7 !important;
+      border: 1px solid #E2E7E4 !important;
       border-radius: 6px !important;
       padding: 4px !important;
     }
     #chartContainer svg { width: 100% !important; max-width: 100% !important; }
-    /* ── Source note ── */
     .source-note {
+      font-family: 'IBM Plex Mono', monospace !important;
       font-size: 8px !important;
-      color: #555555 !important;
+      color: #4A564F !important;
       margin-top: 6px !important;
       max-width: 100% !important;
     }
-    /* ── Page break before assumptions ── */
+    /* Assumptions panel */
     #assumptionsPanel {
-      margin-top: 0 !important;
+      margin-top: 10px !important;
+      padding-top: 8px !important;
+      border-top: 1px solid #E2E7E4 !important;
       background: #ffffff !important;
-      color: #111111 !important;
+      color: #16201C !important;
       max-width: 100% !important;
     }
-    /* ── Assumptions: compact + light theme ── */
     #assumptionsPanel > div:first-child {
-      font-size: 10px !important;
-      color: #333333 !important;
-      border-bottom: 1px solid #cccccc !important;
-      padding: 4px 0 6px !important;
+      font-family: 'IBM Plex Mono', monospace !important;
+      font-size: 9.5px !important;
+      letter-spacing: .06em !important;
+      color: #4A564F !important;
+      border-bottom: none !important;
+      padding: 0 0 8px !important;
       margin-bottom: 8px !important;
     }
-    /* Section headers */
     #assumptionsPanel button {
-      background: #f4f4f4 !important;
-      color: #111111 !important;
+      background: #F1F4F2 !important;
+      color: #16201C !important;
       border: none !important;
-      border-bottom: 1px solid #dddddd !important;
+      border-bottom: 1px solid #E2E7E4 !important;
       padding: 4px 10px !important;
+      font-family: 'IBM Plex Mono', monospace !important;
       font-size: 9px !important;
       width: 100% !important;
       text-align: left !important;
       display: block !important;
       pointer-events: none !important;
     }
-    #assumptionsPanel button span { display: none !important; } /* hide chevrons */
-    /* Force all sections open */
-    #assumptionsPanel [id^="section-"] {
-      display: block !important;
-      padding: 6px 8px !important;
-    }
-    /* Tables */
-    #assumptionsPanel table {
-      font-size: 8px !important;
-      width: 100% !important;
-      border-collapse: collapse !important;
-    }
+    #assumptionsPanel button span { display: none !important; }
+    #assumptionsPanel [id^="section-"] { display: block !important; padding: 6px 8px !important; }
+    #assumptionsPanel table { font-size: 8px !important; width: 100% !important; border-collapse: collapse !important; }
     #assumptionsPanel th {
-      color: #555555 !important;
-      border-bottom: 1px solid #cccccc !important;
+      font-family: 'IBM Plex Mono', monospace !important;
+      color: #6A7872 !important;
+      border-bottom: 1px solid #D8DDD9 !important;
       padding: 2px 4px !important;
       font-size: 8px !important;
       white-space: nowrap !important;
     }
     #assumptionsPanel td {
-      color: #111111 !important;
-      border-bottom: 1px solid #eeeeee !important;
+      font-family: 'IBM Plex Mono', monospace !important;
+      color: #16201C !important;
+      border-bottom: 1px solid #EEF1EF !important;
       padding: 2px 4px !important;
       font-size: 8px !important;
     }
-    /* Inputs render as plain text */
     #assumptionsPanel input {
       border: none !important;
       background: transparent !important;
-      color: #111111 !important;
+      color: #16201C !important;
+      font-family: 'IBM Plex Mono', monospace !important;
       font-size: 8px !important;
       padding: 0 !important;
       width: auto !important;
     }
-    /* Hide assumption sections not relevant to current view */
     #assumptionsPanel [data-print="hide"] { display: none !important; }
     #assumptionsPanel [data-print="show"] { display: block !important; }
-    /* Collapse accordion padding */
     #assumptionsPanel .assump-section { margin-bottom: 4px !important; }
-    /* Metro selectors and other controls */
     #assumptionsPanel select { display: none !important; }
-    #assumptionsPanel .metro-label { font-size: 8px !important; color: #555555 !important; }
+    #assumptionsPanel .metro-label { font-size: 8px !important; color: #6A7872 !important; }
+    /* Footer: kept visible as the page attribution */
+    footer.site-foot {
+      display: flex !important;
+      margin-top: 14px !important;
+      padding-top: 8px !important;
+      border-top: 1px solid #E2E7E4 !important;
+      font-size: 8.5px !important;
+      color: #6A7872 !important;
+    }
   }
   #egressCustomInput::-webkit-inner-spin-button,
   #egressCustomInput::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
   #gpuCountCustom::-webkit-inner-spin-button,
   #gpuCountCustom::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
-  /* Workload mix slider tracks — dark unused portion for contrast */
+  /* Workload mix slider tracks: dark unused portion for contrast */
   #tcoMixOD, #tcoMixCom, #tcoMixSpot {
     -webkit-appearance: none; appearance: none;
     width: 100%; height: 4px; border-radius: 2px; outline: none; cursor: pointer;
@@ -391,10 +391,6 @@
   ::selection { background: rgba(11,110,79,.14); }
   :focus-visible { outline: 2px solid #0B6E4F; outline-offset: 2px; border-radius: 2px; }
   .header { text-align: left; width: 100%; max-width: 900px; margin: 0 auto 2px; }
-  .eyebrow {
-    font-family: 'IBM Plex Mono', monospace; font-size: 10px; letter-spacing: .2em;
-    text-transform: uppercase; color: var(--muted); margin: 0 0 10px;
-  }
   .header h1 { font-weight: 500; letter-spacing: -0.012em; }
   .rule { display: flex; height: 2px; max-width: 220px; margin: 14px 0 14px; border-radius: 1px; overflow: hidden; }
   .rule i { display: block; height: 100%; }
@@ -402,7 +398,7 @@
   .rule .a { flex-basis: 24%; background: #0B6E4F; }
   .rule .f { flex-basis: 12%; background: #9A6A1E; }
   .meta-line { font-family: 'IBM Plex Mono', monospace; font-size: 10.5px; color: var(--muted); max-width: 860px; line-height: 1.6; margin: 0 0 6px; }
-  .sub-line  { font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: #4A564F; margin: 0; max-width: none; }
+  .sub-line  { font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: #4A564F; margin: 0 0 18px; max-width: none; }
   .source-note { font-family: 'IBM Plex Mono', monospace; }
   .low-tag {
     font-family: 'IBM Plex Mono', monospace; font-size: 8px; letter-spacing: .12em;
@@ -456,18 +452,14 @@
   @media (max-width: 460px) {
     #tcoBody > div:first-child { grid-template-columns: 1fr !important; }
   }
-  @media print {
-    #mobileRank, footer.site-foot { display: none !important; }
-  }
 </style>
 </head>
 <body>
 <div class="header">
-  <p class="eyebrow">AI Compute Economics · Interactive Exhibit</p>
-  <h1>Workload Placement Strategy</h1>
+  <h1>GPU Placement Explorer</h1>
   <div class="rule" aria-hidden="true"><i class="p"></i><i class="a"></i><i class="f"></i></div>
-  <p class="meta-line">Rates verified 2026-07-15 · the same GPU at the same provider can differ 2–4× by billing construct (on-demand vs capacity blocks vs savings plans) — the pricing slider maps to published constructs; verify your quote before committing.</p>
-  <p id="chartSubtitle" class="sub-line">Estimated GPU cost by provider and region with sustainability overlay · H100 (80GB SXM5)</p>
+  <p class="meta-line">Rates verified 2026-07-15 · the same GPU at the same provider can differ 2-4x by billing construct (on-demand vs capacity blocks vs savings plans). The pricing slider maps to published constructs; verify your quote before committing.</p>
+  <p id="chartSubtitle" class="sub-line">Compares GPU cost and carbon intensity across cloud, neocloud, and owned hardware, by provider and region · H100 (80GB SXM5)</p>
 </div>
 <!-- Pricing slider -->
 <div class="pricing-slider-wrap">
@@ -475,6 +467,7 @@
   <div style="display:flex; align-items:center; gap:56px; margin-bottom:0; width:100%;">
     <span style="font-family:'IBM Plex Mono',monospace; font-size:11px; color:#6A7872; white-space:nowrap; flex-shrink:0;">GPU Type:</span>
     <div style="flex:1; padding-left:calc(12.5% - 40px); padding-right:calc(12.5% - 60px); display:flex; gap:8px;">
+      <label id="gpuBtn-b300" onclick="setGpuType('b300')" style="font-family:'Spectral',Georgia,serif; font-size:12px; font-weight:400; padding:5px 14px; border-radius:6px; cursor:pointer; user-select:none; background:transparent; color:#6A7872; border:1px solid #D8DDD9;">B300 (288GB)</label>
       <label id="gpuBtn-b200" onclick="setGpuType('b200')" style="font-family:'Spectral',Georgia,serif; font-size:12px; font-weight:400; padding:5px 14px; border-radius:6px; cursor:pointer; user-select:none; background:transparent; color:#6A7872; border:1px solid #D8DDD9;">B200 (192GB)</label>
       <label id="gpuBtn-h200" onclick="setGpuType('h200')" style="font-family:'Spectral',Georgia,serif; font-size:12px; font-weight:400; padding:5px 14px; border-radius:6px; cursor:pointer; user-select:none; background:transparent; color:#6A7872; border:1px solid #D8DDD9;">H200 (141GB)</label>
       <label id="gpuBtn-h100" onclick="setGpuType('h100')" style="font-family:'Spectral',Georgia,serif; font-size:12px; font-weight:600; padding:5px 14px; border-radius:6px; cursor:pointer; user-select:none; background:#16201C; color:#F7F8F7; border:1px solid #16201C;">H100 (80GB)</label>
@@ -483,7 +476,7 @@
       <label id="gpuBtn-a10"  onclick="setGpuType('a10')"  style="font-family:'Spectral',Georgia,serif; font-size:12px; font-weight:400; padding:5px 14px; border-radius:6px; cursor:pointer; user-select:none; background:transparent; color:#6A7872; border:1px solid #D8DDD9;">A10G (24GB)</label>
     </div>
   </div>
-  <!-- No. of GPUs slider — tight below GPU type -->
+  <!-- No. of GPUs slider: tight below GPU type -->
   <div style="display:flex; align-items:flex-start; gap:56px; margin-top:32px; margin-bottom:0; width:100%;">
     <span style="font-family:'IBM Plex Mono',monospace; font-size:11px; color:#6A7872; white-space:nowrap; flex-shrink:0; padding-top:4px;">No. of GPUs:</span>
     <div style="flex:1; padding-left:calc(12.5% - 40px); padding-right:calc(12.5% - 60px);">
@@ -518,7 +511,7 @@
       </div>
     </div>
   </div>
-  <!-- Data Egress slider — gap above to separate from GPU group -->
+  <!-- Data Egress slider: gap above to separate from GPU group -->
   <div style="display:flex; align-items:flex-start; gap:56px; margin-top:20px; margin-bottom:0; width:100%;">
     <span style="font-family:'IBM Plex Mono',monospace; font-size:11px; color:#6A7872; white-space:nowrap; flex-shrink:0; padding-top:4px;">Data Egress:</span>
     <div style="flex:1; padding-left:calc(12.5% - 40px); padding-right:calc(12.5% - 60px);">
@@ -552,7 +545,7 @@
       </div>
     </div>
   </div>
-  <!-- Workload type row — gap above to separate from cost calculator group -->
+  <!-- Workload type row: gap above to separate from cost calculator group -->
   <div style="display:flex; align-items:center; gap:56px; margin-top:14px; margin-bottom:4px; width:100%;">
     <span style="font-family:'IBM Plex Mono',monospace; font-size:11px; color:#6A7872; white-space:nowrap; flex-shrink:0;">Workload Type:</span>
     <div style="flex:1; padding-left:calc(12.5% - 40px); padding-right:calc(12.5% - 60px); position:relative;">
@@ -563,7 +556,7 @@
       </div>
     </div>
   </div>
-  <!-- Pricing model slider — tight below workload type -->
+  <!-- Pricing model slider: tight below workload type -->
   <div style="display:flex; align-items:flex-start; gap:56px; margin-top:16px; width:100%;">
     <span style="font-family:'IBM Plex Mono',monospace; font-size:11px; color:#6A7872; white-space:nowrap; flex-shrink:0; padding-top:4px;">Pricing Model:</span>
     <div style="flex:1; padding-left:calc(12.5% - 40px); padding-right:calc(12.5% - 60px);">
@@ -614,9 +607,9 @@
       <span class="provider-dot" style="background:#A63A2B"></span>Oracle OCI
     </label>
   </div>
-  <!-- Row 2: Neo-cloud -->
+  <!-- Row 2: Neocloud -->
   <div style="display:flex; align-items:center; gap:8px; flex-wrap:nowrap;">
-    <span style="font-family:'IBM Plex Mono',monospace; font-size:9px; color:#6A7872; text-transform:uppercase; letter-spacing:0.6px; width:130px; flex-shrink:0; white-space:nowrap; text-align:left;">Neo-cloud</span>
+    <span style="font-family:'IBM Plex Mono',monospace; font-size:9px; color:#6A7872; text-transform:uppercase; letter-spacing:0.6px; width:130px; flex-shrink:0; white-space:nowrap; text-align:left;">Neocloud</span>
     <label class="filter-label inactive" data-provider="Lambda Labs" style="border-color:#6D5AA8;color:#6D5AA8">
       <span class="provider-dot" style="background:#6D5AA8"></span>Lambda Labs
     </label>
@@ -629,6 +622,9 @@
     <label class="filter-label inactive" data-provider="Crusoe" style="border-color:#0F7080;color:#0F7080">
       <span class="provider-dot" style="background:#0F7080"></span>Crusoe
     </label>
+    <label class="filter-label inactive" data-provider="Nebius" style="border-color:#A6435C;color:#A6435C">
+      <span class="provider-dot" style="background:#A6435C"></span>Nebius
+    </label>
   </div>
   <!-- Row 3: On-Prem / Hybrid -->
   <div style="display:flex; align-items:center; gap:8px; flex-wrap:nowrap;">
@@ -640,15 +636,15 @@
       <span class="provider-dot" style="background:#9A6A1E"></span>Corp DC (3yr only)
     </label>
   </div>
-  <!-- Row 4: Annotation toggle — only visible in on-demand mode -->
+  <!-- Row 4: Annotation toggle -->
   <div id="annotationToggleWrap" style="display:none; align-items:center; gap:8px; flex-wrap:nowrap;">
     <span style="font-family:'IBM Plex Mono',monospace; font-size:9px; color:#6A7872; text-transform:uppercase; letter-spacing:0.6px; width:130px; flex-shrink:0; white-space:nowrap; text-align:left; font-style:italic;">Annotation</span>
     <button id="annotationToggleBtn" onclick="toggleAnnotation()"
       style="display:flex; align-items:center; gap:6px; font-family:'Spectral',Georgia,serif; font-size:11px; font-weight:400; font-style:italic;
              padding:4px 12px; border-radius:3px; border:1.5px solid #D8DDD9; cursor:pointer;
-             color:#6A7872; background:transparent; user-select:none; transition:opacity 0.15s; letter-spacing:0.2px; white-space:nowrap;">
-      <svg id="annotationToggleIcon" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
-      <span id="annotationToggleLabel">Hide annotation</span>
+             color:#6A7872; background:transparent; user-select:none; transition:border-color 0.15s, color 0.15s; letter-spacing:0.2px; white-space:nowrap;">
+      <svg id="annotationToggleIcon" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/><path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
+      <span id="annotationToggleLabel">Show annotation</span>
     </button>
   </div>
   <!-- Row 4b: Dot labels toggle -->
@@ -656,8 +652,8 @@
     <span style="font-family:'IBM Plex Mono',monospace; font-size:9px; color:#6A7872; text-transform:uppercase; letter-spacing:0.6px; width:130px; flex-shrink:0; white-space:nowrap; text-align:left; font-style:italic;">Data Labels</span>
     <button id="labelsToggleBtn" onclick="toggleLabels()"
       style="display:flex; align-items:center; gap:6px; font-family:'Spectral',Georgia,serif; font-size:11px; font-weight:400; font-style:italic;
-             padding:4px 12px; border-radius:3px; border:1.5px solid #D8DDD9; cursor:pointer;
-             color:#6A7872; background:transparent; user-select:none; transition:opacity 0.15s; letter-spacing:0.2px; white-space:nowrap;">
+             padding:4px 12px; border-radius:3px; border:1.5px solid #33413B; cursor:pointer;
+             color:#4A564F; background:transparent; user-select:none; transition:border-color 0.15s, color 0.15s; letter-spacing:0.2px; white-space:nowrap;">
       <svg id="labelsToggleIcon" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
       <span id="labelsToggleLabel">Hide labels</span>
     </button>
@@ -681,15 +677,15 @@
     </div>
     <div id="viewModeNote" style="display:none; padding-left:138px; font-family:'Spectral',Georgia,serif; font-size:10.5px; color:#6A7872; line-height:1.5;">
       <strong style="color:#4A564F;">Caveat:</strong>
-      BF16/FP16 dense throughput (vendor spec); realized MFU is typically 35–55% of this — re-run with workload-specific utilization for decision-grade comparisons.
+      BF16/FP16 dense throughput (vendor spec); realized MFU is typically 35-55% of this; re-run with workload-specific utilization for decision-grade comparisons.
     </div>
   </div>
 </div>
 <p class="source-note" id="sourceNote">
-  <span id="sourceOndemand" style="display:none">On-demand: AWS g5.2xlarge (A10G) · Azure NC8ads A10 v4 · GCP g2-standard-4 (L4) · OCI VM.GPU.A10.1 · Lambda Labs A10 · CoreWeave A10. Carbon: EPA eGRID 2024 — average grid intensity (not marginal) × nameplate TDP; facility overhead (PUE) excluded from carbon, deliberately. Power/cooling $ components are TDP-scaled from an H100-class baseline.</span>
-  <span id="sourceCommitted" style="display:none">Committed/reserved (1yr): AWS ~$0.592/hr (41% off, Savings Plan) · Azure ~$1.10/hr (23% off, 1yr reserved) · GCP ~$0.445/hr (37% off, CUD) · OCI ~$1.40/hr (30% off) · Lambda Labs ~$0.638/hr (est. 15% annual) · CoreWeave ~$0.680/hr (est. 20% committed) · RunPod: uses 6-month savings plan rate (~25% off) for both 1yr and 3yr columns — no longer commitments published; enterprise rates negotiated. Carbon unchanged.</span>
+  <span id="sourceOndemand" style="display:none">On-demand: AWS g5.2xlarge (A10G) · Azure NC8ads A10 v4 · GCP g2-standard-4 (L4) · OCI VM.GPU.A10.1 · Lambda Labs A10 · CoreWeave A10. Carbon: eGRID2023, EPA's most recent published release, average grid intensity (not marginal) x nameplate TDP; facility overhead (PUE) is deliberately excluded from carbon. Power/cooling $ components are TDP-scaled from an H100-class baseline.</span>
+  <span id="sourceCommitted" style="display:none">Committed/reserved (1yr): AWS ~$0.592/hr (41% off, Savings Plan) · Azure ~$1.10/hr (23% off, 1yr reserved) · GCP ~$0.445/hr (37% off, CUD) · OCI ~$1.40/hr (30% off) · Lambda Labs ~$0.638/hr (est. 15% annual) · CoreWeave ~$0.680/hr (est. 20% committed) · RunPod: uses 6-month savings plan rate (~25% off) for both 1yr and 3yr columns; no longer-term commitments are published, and enterprise rates are negotiated. Carbon unchanged.</span>
   <span id="sourceCommitted3yr" style="display:none">Committed/reserved (3yr): AWS ~$0.402/hr (60% off, all-upfront SP) · Azure ~$0.858/hr (40% off) · GCP ~$0.318/hr (55% off, CUD) · OCI ~$1.10/hr (45% off) · Lambda Labs ~$0.563/hr (est. 25%) · CoreWeave ~$0.553/hr (est. 35%). Colo (dashed): owned A10 hardware, 3yr amortisation + colo fees ~$0.34/hr. Colo (PPA) assumes 100% renewable PPA. 3yr commitments carry GPU generation risk. Carbon unchanged.</span>
-  <span id="sourceSpot" style="display:none">Interruptible/spot: AWS g5.xlarge spot ~$0.54/hr · Azure NC8ads A10 v4 spot ~$0.264/hr (82% off!) · GCP g2-standard-4 spot ~$0.28–0.31/hr (~60% off) · OCI preemptible ~$1.00/hr · CoreWeave interruptible ~$0.425/hr · Lambda Labs: no spot offering (hidden). Spot prices are volatile and subject to availability. Not suitable for latency-sensitive or uninterruptible workloads.</span>
+  <span id="sourceSpot" style="display:none">Interruptible/spot: AWS g5.xlarge spot ~$0.54/hr · Azure NC8ads A10 v4 spot ~$0.264/hr (82% off!) · GCP g2-standard-4 spot ~$0.28-0.31/hr (~60% off) · OCI preemptible ~$1.00/hr · CoreWeave interruptible ~$0.425/hr · Lambda Labs: no spot offering (hidden). Spot prices are volatile and subject to availability. Not suitable for latency-sensitive or uninterruptible workloads.</span>
 </p>
 <!-- ── Share / Export bar ──────────────────────────────────────────── -->
 <div class="no-print" style="width:100%; max-width:900px; display:flex; align-items:center; justify-content:flex-end; gap:8px; margin-top:14px; margin-bottom:0;">
@@ -720,15 +716,6 @@
       <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
       Save PDF / Print
     </button>
-    <a id="btnFeedback" href="https://tally.so/r/WOK12v" target="_blank" rel="noopener"
-      style="display:flex; align-items:center; gap:6px; font-family:'IBM Plex Mono',monospace; font-size:10px;
-             color:#4A564F; background:#F1F4F2; border:1px solid #D8DDD9; border-radius:6px;
-             padding:6px 14px; cursor:pointer; transition:border-color 0.15s, color 0.15s; letter-spacing:0.3px; height:31px; box-sizing:border-box; white-space:nowrap; text-decoration:none;"
-      onmouseover="this.style.borderColor='#6A7872';this.style.color='#16201C'"
-      onmouseout="this.style.borderColor='#D8DDD9';this.style.color='#4A564F'">
-      <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
-      Share feedback
-    </a>
     <span id="shareToast" style="font-family:'IBM Plex Mono',monospace; font-size:10px; color:#0B6E4F;
       opacity:0; transition:opacity 0.3s; letter-spacing:0.3px; pointer-events:none;">Link copied</span>
 </div>
@@ -740,7 +727,7 @@
       font-family:'IBM Plex Mono',monospace; font-size:11px; letter-spacing:0.6px; text-align:left;">
       <span style="display:flex; align-items:center; gap:10px;">
         <span style="display:flex; flex-direction:column; gap:2px;">
-          <span id="tcoHeading" style="color:#16201C; font-size:11px; letter-spacing:0.6px;">3-YEAR TOTAL COST OF OWNERSHIP — portfolio workload mix</span>
+          <span id="tcoHeading" style="color:#16201C; font-size:11px; letter-spacing:0.6px;">3-YEAR TOTAL COST OF OWNERSHIP: portfolio workload mix</span>
           <span style="color:#6A7872; font-size:9px; font-weight:400; letter-spacing:0.3px;">Model TCO across providers, commitment tiers and workload mix</span>
         </span>
       </span>
@@ -845,7 +832,7 @@
 </div> <!-- /tcoPanel -->
 <div id="assumptionsPanel" style="width:100%; max-width:900px; margin-top:24px;">
   <div style="border:1px solid #D8DDD9; border-radius:6px; padding:12px 14px; margin-bottom:14px;">
-    <div style="font-size:10px; letter-spacing:.08em; text-transform:uppercase; color:#4A564F; margin-bottom:8px;">Owned-hardware assumptions <span style="color:#6A7872; text-transform:none; letter-spacing:0;">— the numbers every skeptic should edit</span></div>
+    <div style="font-size:10px; letter-spacing:.08em; text-transform:uppercase; color:#4A564F; margin-bottom:8px;">Owned-hardware assumptions</div>
     <div style="display:flex; gap:18px; flex-wrap:wrap; align-items:flex-end;">
       <div>
         <div id="capexLabel" style="font-size:9.5px; color:#6A7872; margin-bottom:4px; font-family:'IBM Plex Mono',monospace;">SYSTEM CAPEX</div>
@@ -860,17 +847,17 @@
       </div>
       <button onclick="applyHwAssumptions()" style="background:#F1F4F2; border:1px solid #D8DDD9; color:#4A564F; border-radius:4px; font-family:'IBM Plex Mono',monospace; font-size:10px; padding:5px 12px; cursor:pointer;">Apply</button>
       <button onclick="resetHwAssumptions()" style="background:none; border:none; color:#6A7872; font-family:'IBM Plex Mono',monospace; font-size:10px; cursor:pointer; text-decoration:underline;">Reset</button>
-      <span style="font-size:10px; color:#6A7872; max-width:340px;">Colo / Corp-DC dots reprice live. B200 default $400k — 2026 quotes span ~$290k (street) to $515k (2024 list); use yours.</span>
+      <span style="font-size:10px; color:#6A7872; max-width:340px;">Colo / Corp-DC dots reprice live. B200 default $400k. 2026 quotes span ~$290k (street) to $515k (2024 list); use yours.</span>
     </div>
   </div>
   <div style="font-family:'IBM Plex Mono',monospace; font-size:11px; color:#6A7872; letter-spacing:0.5px; padding:10px 0 12px; border-bottom:1px solid #E2E7E4; margin-bottom:16px;">
-    ASSUMPTIONS & PRICING — edit values and apply to run scenarios
+    ASSUMPTIONS & PRICING: edit values and apply to run scenarios
   </div>
   <div id="assumptionsBody">
-    <!-- ── Section: Cloud & Neo-Cloud ── -->
+    <!-- ── Section: Cloud & Neocloud ── -->
     <div style="margin-bottom:8px; border:1px solid #E2E7E4; border-radius:8px; overflow:hidden;">
       <button onclick="toggleSection('cloud')" style="width:100%; display:flex; align-items:center; justify-content:space-between; background:#F1F4F2; border:none; padding:10px 14px; cursor:pointer; color:#4A564F; font-family:'IBM Plex Mono',monospace; font-size:10px; text-transform:uppercase; letter-spacing:0.5px; text-align:left;">
-        <span>Cloud & Neo-Cloud Pricing ($/hr)</span>
+        <span>Cloud & Neocloud Pricing ($/hr)</span>
         <span id="chevron-cloud" style="transition:transform 0.2s; color:#6A7872;">▶</span>
       </button>
       <div id="section-cloud" style="display:none; padding:14px;">
@@ -899,12 +886,12 @@
     <!-- ── Section: Data Egress ── -->
     <div style="margin-bottom:8px; border:1px solid #E2E7E4; border-radius:8px; overflow:hidden;">
       <button onclick="toggleSection('egress')" style="width:100%; display:flex; align-items:center; justify-content:space-between; background:#F1F4F2; border:none; padding:10px 14px; cursor:pointer; color:#4A564F; font-family:'IBM Plex Mono',monospace; font-size:10px; text-transform:uppercase; letter-spacing:0.5px; text-align:left;">
-        <span>Data Egress Cost — assumptions</span>
+        <span>Data Egress Cost assumptions</span>
         <span id="chevron-egress" style="transition:transform 0.2s; color:#6A7872;">▶</span>
       </button>
       <div id="section-egress" style="display:none; padding:14px;">
         <p style="font-family:'Spectral',Georgia,serif; font-size:11px; color:#6A7872; line-height:1.6; margin:0 0 12px;">
-          Egress cost encoded in dot border opacity — higher opacity = higher cost per TB. Edit rates below and apply to update the chart encoding. Free allowances are deducted before billing.
+          Egress cost is encoded in dot border opacity: higher opacity means higher cost per TB. Edit rates below and apply to update the chart encoding. Free allowances are deducted before billing.
         </p>
         <div style="overflow-x:auto;">
           <table id="egressTable" style="width:100%; border-collapse:collapse; font-size:11px;">
@@ -929,7 +916,7 @@
     <!-- ── Section: Colo ── -->
     <div style="margin-bottom:8px; border:1px solid #E2E7E4; border-radius:8px; overflow:hidden;">
       <button onclick="toggleSection('colo')" style="width:100%; display:flex; align-items:center; justify-content:space-between; background:#F1F4F2; border:none; padding:10px 14px; cursor:pointer; color:#4A564F; font-family:'IBM Plex Mono',monospace; font-size:10px; text-transform:uppercase; letter-spacing:0.5px; text-align:left;">
-        <span><span style="display:inline-block; width:8px; height:8px; border-radius:50%; background:#55605B; opacity:0.6; margin-right:8px; vertical-align:middle;"></span>Colocation (3yr) — component assumptions</span>
+        <span><span style="display:inline-block; width:8px; height:8px; border-radius:50%; background:#55605B; opacity:0.6; margin-right:8px; vertical-align:middle;"></span>Colocation (3yr) component assumptions</span>
         <span id="chevron-colo" style="transition:transform 0.2s; color:#6A7872;">▶</span>
       </button>
       <div id="section-colo" style="display:none; padding:14px;">
@@ -990,7 +977,7 @@
     <!-- ── Section: Corp DC ── -->
     <div style="border:1px solid #E2E7E4; border-radius:8px; overflow:hidden;">
       <button onclick="toggleSection('corpdc')" style="width:100%; display:flex; align-items:center; justify-content:space-between; background:#F1F4F2; border:none; padding:10px 14px; cursor:pointer; color:#4A564F; font-family:'IBM Plex Mono',monospace; font-size:10px; text-transform:uppercase; letter-spacing:0.5px; text-align:left;">
-        <span><span style="display:inline-block; width:8px; height:8px; border-radius:2px; background:#16201C; opacity:0.7; margin-right:8px; vertical-align:middle;"></span>Corporate Data Center (3yr) — component assumptions</span>
+        <span><span style="display:inline-block; width:8px; height:8px; border-radius:2px; background:#16201C; opacity:0.7; margin-right:8px; vertical-align:middle;"></span>Corporate Data Center (3yr) component assumptions</span>
         <span id="chevron-corpdc" style="transition:transform 0.2s; color:#6A7872;">▶</span>
       </button>
       <div id="section-corpdc" style="display:none; padding:14px;">
@@ -1087,177 +1074,207 @@
   }
 </style>
 <footer class="site-foot">
-  <span>Workload Placement Strategy · interactive exhibit</span>
+  <span>GPU Placement Explorer</span>
   <span>Public list prices · verified 2026-07-15 · not a financial commitment</span>
 </footer>
 <script>
 // ── GPU datasets ─────────────────────────────────────────────────────────────
 // All costs are per-GPU-hour. H100/A100 instances /8 where needed.
 // Regional availability is thinner for H100/A100 vs A10.
+const REGIONS_B300 = [
+  // Blackwell Ultra, added this pass. Public single-GPU on-demand pricing is
+  // thin: most hyperscalers have not posted a per-GPU B300 rate as of 2026-07
+  // (AWS, Azure, GCP, OCI all absent from this array for that reason; GCP and
+  // OCI's "GB300" listings are the paired Grace-Blackwell superchip, a
+  // different SKU and unit of sale, not plotted here). CoreWeave sells GB300
+  // access only through account-executive contact, no posted rate. Lambda
+  // Labs has not listed B300 on its on-demand page this pass.
+  // RunPod: B300 Secure Cloud (288GB HBM3e) $7.39/GPU-hr, added 2026-06-30 as
+  // the new top of their ladder, ~25% above their B200 rate. No published
+  // reserved or spot rate for this tier yet.
+  { provider:'RunPod', name:'US East (VA)', instance:'B300 Secure Cloud', code:'rp-us-east', cost:7.39, committed:null, committed3yr:null, spot:null, carbon:385 },
+  { provider:'RunPod', name:'US West (OR)', instance:'B300 Secure Cloud', code:'rp-us-west', cost:7.39, committed:null, committed3yr:null, spot:null, carbon:130 },
+  // Nebius: B300 on-demand $7.85/GPU-hr (published rate, 2026-07). Same
+  // single-national-rate caveat as its H100/B200 rows; no committed or spot
+  // rate published this pass.
+  { provider:'Nebius', name:'US East',    instance:'B300 SXM', code:'nebius-us-east', cost:7.85, committed:null, committed3yr:null, spot:null, carbon:385 },
+  { provider:'Nebius', name:'US Central', instance:'B300 SXM', code:'nebius-us-central', cost:7.85, committed:null, committed3yr:null, spot:null, carbon:470 },
+];
 const REGIONS_H200 = [
-  // AWS — p5en.48xlarge /8 (H200 141GB, enhanced EFA). Real published on-demand
+  // AWS: p5en.48xlarge /8 (H200 141GB, enhanced EFA). Real published on-demand
   // exists for p5en ($63.296/hr us-east-1, instances.vantage.sh 2026-07); the
   // plain p5e variant has no consistently surfaced list rate. 1yr/3yr est. from
   // typical P-family SP discounts; spot not re-verified this pass.
   { provider:'AWS',     name:'N. Virginia', instance:'p5en.48xlarge /8', code:'us-east-1', cost:7.91, committed:5.14, committed3yr:3.56, spot:null, carbon:385 },
   { provider:'AWS',     name:'Oregon',      instance:'p5en.48xlarge /8', code:'us-west-2', cost:7.91, committed:5.14, committed3yr:3.56, spot:null, carbon:130 },
-  // Azure — removed 2026-07: no verified public per-hour listing for an H200 VM
+  // Azure: removed 2026-07: no verified public per-hour listing for an H200 VM
   // SKU (ND H200 v5 previewed; pricing not published). Prior rows were unsourced.
-  // GCP — a3-ultragpu-8g /8 (H200 SXM). Official accelerator-optimized price
+  // GCP: a3-ultragpu-8g /8 (H200 SXM). Official accelerator-optimized price
   // sheet (us-central1, 2026-07): OD $84.807/node, spot $42.252, CUD1 $58.472,
   // CUD3 $37.208. Note: GCP H200 spot ($5.28/GPU) exceeds the 3yr CUD ($4.65).
   { provider:'GCP',     name:'Iowa',        instance:'a3-ultragpu /8',  code:'us-central1',cost:10.60, committed:7.31, committed3yr:4.65, spot:5.28, carbon:470 },
   { provider:'GCP',     name:'N. Virginia', instance:'a3-ultragpu /8',  code:'us-east4',   cost:10.60, committed:7.31, committed3yr:4.65, spot:5.28, carbon:385 },
   { provider:'GCP',     name:'Oregon',      instance:'a3-ultragpu /8',  code:'us-west1',   cost:10.60, committed:7.31, committed3yr:4.65, spot:5.28, carbon:130 },
-  // OCI — BM.GPU.H200.8 /8. Oracle's GA announcement sets list at $10/GPU-hr
+  // OCI: BM.GPU.H200.8 /8. Oracle's GA announcement sets list at $10/GPU-hr
   // (same as H100). Committed = Universal Credits est. 30%/45%; spot = est.
   // preemptible ~50%.
   { provider:'OCI',     name:'US East (Ashburn)',  instance:'BM.GPU.H200.8 /8', code:'oci-ashburn', cost:10.00, committed:7.00, committed3yr:5.50, spot:5.00, carbon:385 },
   { provider:'OCI',     name:'US West (San Jose)', instance:'BM.GPU.H200.8 /8', code:'oci-sanjose', cost:10.00, committed:7.00, committed3yr:5.50, spot:5.00, carbon:215 },
-  // Lambda Labs — removed 2026-07: H200 no longer on Lambda's on-demand
+  // Lambda Labs: removed 2026-07: H200 no longer on Lambda's on-demand
   // instance price list (cluster/reserved only, contact sales).
-  // CoreWeave — HGX H200 $50.44/node = $6.31/GPU (unchanged). Spot $20.93/node
+  // CoreWeave: HGX H200 $50.44/node = $6.31/GPU (unchanged). Spot $20.93/node
   // = $2.62/GPU (NA, 2026-07 report). Committed est. 35%/55% per CW's published
-  // 25–60% reserved-discount band.
+  // 25-60% reserved-discount band.
   { provider:'CoreWeave', name:'US East (NJ)',        instance:'H200 SXM5', code:'cw-us-east', cost:6.31, committed:4.10, committed3yr:2.84, spot:2.62, carbon:390 },
   { provider:'CoreWeave', name:'US West (Las Vegas)', instance:'H200 SXM5', code:'cw-us-west', cost:6.31, committed:4.10, committed3yr:2.84, spot:2.62, carbon:320 },
-  // RunPod — H200 Secure Cloud $4.39 (tracker-verified 2026-07-06). Committed
+  // RunPod: H200 Secure Cloud $4.39 (tracker-verified 2026-07-06). Committed
   // est. ~25% savings-plan; spot est. from Community tier discount.
   { provider:'RunPod', name:'US East (VA)', instance:'H200 SXM', code:'rp-us-east', cost:4.39, committed:3.29, committed3yr:3.29, spot:2.55, carbon:385 },
   { provider:'RunPod', name:'US West (OR)', instance:'H200 SXM', code:'rp-us-west', cost:4.39, committed:3.29, committed3yr:3.29, spot:2.55, carbon:130 },
-  // Crusoe — H200 HGX $4.29/GPU-hr (official pricing page 2026-07). Spot and
+  // Crusoe: H200 HGX $4.29/GPU-hr (official pricing page 2026-07). Spot and
   // reserved are contact-sales only, so spot is not plotted; committed est. 20%/40%.
   { provider:'Crusoe', name:'Texas',       instance:'H200 HGX',  code:'crusoe-tx',  cost:4.29, committed:3.43, committed3yr:2.57, spot:null, carbon:40  },
   { provider:'Crusoe', name:'Virginia',    instance:'H200 HGX',  code:'crusoe-va',  cost:4.29, committed:3.43, committed3yr:2.57, spot:null, carbon:385 },
 ];
 const REGIONS_B200 = [
-  // AWS — p6-b200.48xlarge /8. Now purchasable on-demand ($113.9328/hr
-  // us-east-1 = $14.24/GPU, vantage/doit 2026-07) — no longer Capacity Blocks
+  // AWS: p6-b200.48xlarge /8. Now purchasable on-demand ($113.9328/hr
+  // us-east-1 = $14.24/GPU, vantage/doit 2026-07), no longer Capacity Blocks
   // only. committed = 1yr Compute SP no-upfront ($89.722/hr); committed3yr =
   // 3yr EC2 Instance SP ($49.219/hr, family/region-locked). Spot snapshot
   // ~$21.6/hr node = $2.70/GPU (81% off; 1 AZ, volatile).
   { provider:'AWS', name:'N. Virginia', instance:'p6-b200.48xlarge /8', code:'us-east-1', cost:14.24, committed:11.22, committed3yr:6.15, spot:2.70, carbon:385 },
   { provider:'AWS', name:'Ohio',        instance:'p6-b200.48xlarge /8', code:'us-east-2', cost:14.24, committed:11.22, committed3yr:6.15, spot:2.70, carbon:540 },
   { provider:'AWS', name:'Oregon',      instance:'p6-b200.48xlarge /8', code:'us-west-2', cost:14.24, committed:11.22, committed3yr:6.15, spot:2.70, carbon:130 },
-  // GCP — a4-highgpu-8g /8 (B200), added 2026-07. Official price sheet: NO
-  // standard on-demand tier (DWS/spot/CUD only) — cost:null keeps it out of the
+  // GCP: a4-highgpu-8g /8 (B200), added 2026-07. Official price sheet: NO
+  // standard on-demand tier (DWS/spot/CUD only); cost:null keeps it out of the
   // on-demand view honestly. Spot $34.237/node = $4.28/GPU; CUD1 $88.927;
   // CUD3 $56.707. (Aggregators mislabel the spot rate as on-demand.)
   { provider:'GCP', name:'Iowa',        instance:'a4-highgpu /8', code:'us-central1', cost:null, committed:11.12, committed3yr:7.09, spot:4.28, carbon:470 },
   { provider:'GCP', name:'N. Virginia', instance:'a4-highgpu /8', code:'us-east4',    cost:null, committed:11.12, committed3yr:7.09, spot:4.28, carbon:385 },
-  // CoreWeave — HGX B200 $68.80/node = $8.60/GPU (unchanged 2026-07). 1yr now
-  // est. 35% per CW's published 25–60% reserved band (a $2.65/GPU 1yr promo
+  // CoreWeave: HGX B200 $68.80/node = $8.60/GPU (unchanged 2026-07). 1yr now
+  // est. 35% per CW's published 25-60% reserved band (a $2.65/GPU 1yr promo
   // rate was previously published but is no longer verifiable). Spot $4.26/GPU
   // carried from prior verification, not re-verified this pass.
   { provider:'CoreWeave', name:'US East (NJ)',        instance:'HGX B200', code:'cw-us-east', cost:8.60, committed:5.59, committed3yr:null, spot:4.26, carbon:390 },
   { provider:'CoreWeave', name:'US West (Las Vegas)', instance:'HGX B200', code:'cw-us-west', cost:8.60, committed:5.59, committed3yr:null, spot:4.26, carbon:320 },
-  // Lambda Labs — B200 SXM6 $6.69/GPU on-demand (official pricing page
-  // 2026-07; 1-Click Clusters $8.87–9.86/GPU are a separate product). Reserved
+  // Lambda Labs: B200 SXM6 $6.69/GPU on-demand (official pricing page
+  // 2026-07; 1-Click Clusters $8.87-9.86/GPU are a separate product). Reserved
   // contact-sales; no spot.
   { provider:'Lambda Labs', name:'US East',  instance:'B200 SXM6', code:'lambda-us-east', cost:6.69, committed:null, committed3yr:null, spot:null, carbon:385 },
   { provider:'Lambda Labs', name:'US West',  instance:'B200 SXM6', code:'lambda-us-west', cost:6.69, committed:null, committed3yr:null, spot:null, carbon:215 },
-  // RunPod — B200 Secure Cloud $5.89 (tracker-verified 2026-07-06; B300 tier
+  // RunPod: B200 Secure Cloud $5.89 (tracker-verified 2026-07-06; B300 tier
   // now sits above it at $7.39). Committed est. ~15% per prior published ratio.
   { provider:'RunPod', name:'US East (VA)', instance:'B200 Secure Cloud', code:'rp-us-east', cost:5.89, committed:5.01, committed3yr:null, spot:null, carbon:385 },
   { provider:'RunPod', name:'US West (OR)', instance:'B200 Secure Cloud', code:'rp-us-west', cost:5.89, committed:5.01, committed3yr:null, spot:null, carbon:130 },
-  // Azure — no public B200 HGX per-hour listing as of 2026-07 (GB200-class ND
-  // announced separately). OCI — BM.GPU.B200.8 GA since Q1 2026 but no
-  // published list rate (reports ~$14–16/GPU-hr). Crusoe — contact-sales only.
+  // Nebius: B200 on-demand $5.50/GPU-hr (published rate, 2026-07). Same
+  // single-national-rate caveat as the H100 row above; committed and spot
+  // not published this pass.
+  { provider:'Nebius', name:'US East',    instance:'B200 SXM', code:'nebius-us-east', cost:5.50, committed:null, committed3yr:null, spot:null, carbon:385 },
+  { provider:'Nebius', name:'US Central', instance:'B200 SXM', code:'nebius-us-central', cost:5.50, committed:null, committed3yr:null, spot:null, carbon:470 },
+  // Azure: no public B200 HGX per-hour listing as of 2026-07 (GB200-class ND
+  // announced separately). OCI: BM.GPU.B200.8 GA since Q1 2026 but no
+  // published list rate (reports ~$14-16/GPU-hr). Crusoe: contact-sales only.
 ];
 const REGIONS_L40S = [
-  // AWS — g6e.2xlarge (1×L40S 48GB). Not re-verified 2026-07 (stable list SKU).
+  // AWS: g6e.2xlarge (1×L40S 48GB). Not re-verified 2026-07 (stable list SKU).
   { provider:'AWS',     name:'N. Virginia', instance:'g6e.2xlarge',     code:'us-east-1', cost:2.02, committed:1.41, committed3yr:1.01, spot:0.81, carbon:385 },
   { provider:'AWS',     name:'Oregon',      instance:'g6e.2xlarge',     code:'us-west-2', cost:2.02, committed:1.41, committed3yr:1.01, spot:0.81, carbon:130 },
-  // Azure — NVads L40S v5. Not re-verified 2026-07.
+  // Azure: NVads L40S v5. Not re-verified 2026-07.
   { provider:'Azure',   name:'East US',     instance:'NVads L40S v5',   code:'az-eastus',  cost:2.50, committed:1.75, committed3yr:1.25, spot:0.50, carbon:385 },
   { provider:'Azure',   name:'West US 2',   instance:'NVads L40S v5',   code:'az-westus2', cost:2.50, committed:1.75, committed3yr:1.25, spot:0.50, carbon:130 },
-  // GCP — no direct L40S offering (L4 is the comparable, see A10G view)
-  // OCI — VM.GPU.L40S exists; per-hour list not verified this pass
-  // CoreWeave — L40S PCIe. Not re-verified 2026-07.
+  // GCP: no direct L40S offering (L4 is the comparable, see A10G view)
+  // OCI: VM.GPU.L40S exists; per-hour list not verified this pass
+  // CoreWeave: L40S PCIe. Not re-verified 2026-07.
   { provider:'CoreWeave', name:'US East (NJ)',        instance:'L40S PCIe', code:'cw-us-east', cost:1.40, committed:1.12, committed3yr:0.91, spot:0.70, carbon:390 },
   { provider:'CoreWeave', name:'US West (Las Vegas)', instance:'L40S PCIe', code:'cw-us-west', cost:1.40, committed:1.12, committed3yr:0.91, spot:0.70, carbon:320 },
-  // RunPod — L40S Secure Cloud $0.99 (tracker-verified 2026-07-06; DOWN from
-  // $1.22 — one of the few price drops this refresh). Committed est. ~25%.
+  // RunPod: L40S Secure Cloud $0.99 (tracker-verified 2026-07-06; DOWN from
+  // $1.22, one of the few price drops this refresh). Committed est. ~25%.
   { provider:'RunPod', name:'US East (VA)', instance:'L40S', code:'rp-us-east', cost:0.99, committed:0.74, committed3yr:0.74, spot:0.58, carbon:385 },
   { provider:'RunPod', name:'US West (OR)', instance:'L40S', code:'rp-us-west', cost:0.99, committed:0.74, committed3yr:0.74, spot:0.58, carbon:130 },
-  // Crusoe — L40S $1.50/GPU added 2026-07 (now on their official price list;
+  // Crusoe: L40S $1.50/GPU added 2026-07 (now on their official price list;
   // previously not offered). Spot contact-sales; committed est. 20%/40%.
   { provider:'Crusoe', name:'Texas',       instance:'L40S', code:'crusoe-tx',  cost:1.50, committed:1.20, committed3yr:0.90, spot:null, carbon:40  },
   { provider:'Crusoe', name:'Virginia',    instance:'L40S', code:'crusoe-va',  cost:1.50, committed:1.20, committed3yr:0.90, spot:null, carbon:385 },
 ];
 const REGIONS_H100 = [
-  // AWS — p5.48xlarge /8 (H100 SXM5 80GB). TRUE on-demand is $55.04/hr
-  // us-east-1 = $6.88/GPU (vantage 2026-06-21; doit concurs) — the previous
+  // AWS: p5.48xlarge /8 (H100 SXM5 80GB). TRUE on-demand is $55.04/hr
+  // us-east-1 = $6.88/GPU (vantage 2026-06-21; doit concurs); the previous
   // $3.90 figure here was the Capacity Blocks effective rate mislabeled as
   // on-demand. committed3yr = published 3yr RI no-upfront ($23.777/hr =
   // $2.97/GPU); 1yr est. 35%; spot $26.971/hr = $3.37/GPU (snapshot, volatile).
   { provider:'AWS',     name:'N. Virginia', instance:'p5.48xlarge /8', code:'us-east-1', cost:6.88, committed:4.47, committed3yr:2.97, spot:3.37, carbon:385 },
   { provider:'AWS',     name:'Ohio',        instance:'p5.48xlarge /8', code:'us-east-2', cost:6.88, committed:4.47, committed3yr:2.97, spot:3.37, carbon:540 },
   { provider:'AWS',     name:'Oregon',      instance:'p5.48xlarge /8', code:'us-west-2', cost:6.88, committed:4.47, committed3yr:2.97, spot:3.37, carbon:130 },
-  // Azure — NC40ads H100 v5 (1×H100). On-demand $6.98 East US unchanged
+  // Azure: NC40ads H100 v5 (1×H100). On-demand $6.98 East US unchanged
   // (vantage 2026-07). Spot fell to $1.40 (vantage). Committed est. 30%/50%.
   { provider:'Azure',   name:'East US',     instance:'NC40ads H100 v5', code:'az-eastus',  cost:6.98, committed:4.89, committed3yr:3.49, spot:1.40, carbon:385 },
   { provider:'Azure',   name:'West US 3',   instance:'NC40ads H100 v5', code:'az-westus3', cost:6.98, committed:4.89, committed3yr:3.49, spot:1.40, carbon:130 },
-  // GCP — a3-highgpu-8g /8 (H100 SXM). Official price sheet (us-central1,
+  // GCP: a3-highgpu-8g /8 (H100 SXM). Official price sheet (us-central1,
   // 2026-07): OD $88.49/node = $11.06/GPU, spot $37.92 = $4.74, CUD1 $61.38 =
   // $7.67, CUD3 $38.86 = $4.86. Previous $3.00 figure was a DWS-era rate, not
   // on-demand. A3/A4 pricing is intended to be uniform across supported regions.
   { provider:'GCP',     name:'Iowa',        instance:'a3-highgpu-8g /8', code:'us-central1',cost:11.06, committed:7.67, committed3yr:4.86, spot:4.74, carbon:470 },
   { provider:'GCP',     name:'N. Virginia', instance:'a3-highgpu-8g /8', code:'us-east4',   cost:11.06, committed:7.67, committed3yr:4.86, spot:4.74, carbon:385 },
   { provider:'GCP',     name:'Oregon',      instance:'a3-highgpu-8g /8', code:'us-west1',   cost:11.06, committed:7.67, committed3yr:4.86, spot:4.74, carbon:130 },
-  // OCI — BM.GPU.H100.8 /8: $10/GPU-hr flat list, region-uniform (verified
+  // OCI: BM.GPU.H100.8 /8: $10/GPU-hr flat list, region-uniform (verified
   // 2026-07, unchanged). Committed = Universal Credits est. 30%/45%; spot =
   // est. preemptible ~50%.
   { provider:'OCI',     name:'US East (Ashburn)',  instance:'BM.GPU.H100.8 /8', code:'oci-ashburn', cost:10.00, committed:7.00, committed3yr:5.50, spot:5.00, carbon:385 },
   { provider:'OCI',     name:'US West (San Jose)', instance:'BM.GPU.H100.8 /8', code:'oci-sanjose', cost:10.00, committed:7.00, committed3yr:5.50, spot:5.00, carbon:215 },
-  // Lambda Labs — H100 SXM $3.99/GPU (official pricing page 2026-07; up from
+  // Lambda Labs: H100 SXM $3.99/GPU (official pricing page 2026-07; up from
   // $2.99). Reserved est. 15%/25%; no spot.
   { provider:'Lambda Labs', name:'San Jose', instance:'H100 SXM', code:'lambda-us-west', cost:3.99, committed:3.39, committed3yr:2.99, spot:null, carbon:215 },
   { provider:'Lambda Labs', name:'Austin',   instance:'H100 SXM', code:'lambda-us-tx',   cost:3.99, committed:3.39, committed3yr:2.99, spot:null, carbon:410 },
-  // CoreWeave — HGX H100 $49.24/node = $6.16/GPU (unchanged). Spot $19.71/node
-  // = $2.46/GPU (NA, 2026-07). Committed est. 35%/55% per published 25–60% band.
+  // CoreWeave: HGX H100 $49.24/node = $6.16/GPU (unchanged). Spot $19.71/node
+  // = $2.46/GPU (NA, 2026-07). Committed est. 35%/55% per published 25-60% band.
   { provider:'CoreWeave', name:'US East (NJ)',       instance:'H100 SXM5', code:'cw-us-east', cost:6.16, committed:4.00, committed3yr:2.77, spot:2.46, carbon:390 },
   { provider:'CoreWeave', name:'US West (Las Vegas)',instance:'H100 SXM5', code:'cw-us-west', cost:6.16, committed:4.00, committed3yr:2.77, spot:2.46, carbon:320 },
-  // RunPod — H100 SXM Secure Cloud $3.29 (tracker-verified 2026-07-06; up from
+  // RunPod: H100 SXM Secure Cloud $3.29 (tracker-verified 2026-07-06; up from
   // $2.69). Committed est. ~25% savings-plan; spot est. Community-tier.
   { provider:'RunPod', name:'US East (VA)', instance:'H100 SXM', code:'rp-us-east', cost:3.29, committed:2.47, committed3yr:2.47, spot:1.91, carbon:385 },
   { provider:'RunPod', name:'US West (OR)', instance:'H100 SXM', code:'rp-us-west', cost:3.29, committed:2.47, committed3yr:2.47, spot:1.91, carbon:130 },
-  // Crusoe — H100 HGX $3.90/GPU (official pricing page 2026-07; up from $2.74).
+  // Crusoe: H100 HGX $3.90/GPU (official pricing page 2026-07; up from $2.74).
   // Spot/reserved contact-sales: spot not plotted; committed est. 20%/40%.
   { provider:'Crusoe', name:'Texas',       instance:'H100 HGX', code:'crusoe-tx',  cost:3.90, committed:3.12, committed3yr:2.34, spot:null, carbon:40  },
   { provider:'Crusoe', name:'Virginia',    instance:'H100 HGX', code:'crusoe-va',  cost:3.90, committed:3.12, committed3yr:2.34, spot:null, carbon:385 },
+  // Nebius: H100 on-demand $3.85/GPU-hr (published rate, 2026-07). One national
+  // rate, not region-differentiated in Nebius's own pricing; carbon intensity
+  // still varies by the two regions below. Committed and spot not published
+  // this pass, Nebius markets committed-use discounts without posting the rate.
+  { provider:'Nebius', name:'US East',    instance:'H100 SXM', code:'nebius-us-east', cost:3.85, committed:null, committed3yr:null, spot:null, carbon:385 },
+  { provider:'Nebius', name:'US Central', instance:'H100 SXM', code:'nebius-us-central', cost:3.85, committed:null, committed3yr:null, spot:null, carbon:470 },
 ];
 const REGIONS_A100 = [
-  // AWS — p4d.24xlarge /8 (A100 40GB). Post-2025-price-cut rates; not
+  // AWS: p4d.24xlarge /8 (A100 40GB). Post-2025-price-cut rates; not
   // re-verified 2026-07 (stable list SKU).
   { provider:'AWS',     name:'N. Virginia', instance:'p4d.24xlarge /8', code:'us-east-1', cost:2.74, committed:1.92, committed3yr:1.37, spot:1.10, carbon:385 },
   { provider:'AWS',     name:'Ohio',        instance:'p4d.24xlarge /8', code:'us-east-2', cost:2.74, committed:1.92, committed3yr:1.37, spot:1.10, carbon:540 },
   { provider:'AWS',     name:'Oregon',      instance:'p4d.24xlarge /8', code:'us-west-2', cost:2.74, committed:1.92, committed3yr:1.37, spot:1.10, carbon:130 },
-  // Azure — NC24ads A100 v4 (1×A100 80GB). Not re-verified 2026-07.
+  // Azure: NC24ads A100 v4 (1×A100 80GB). Not re-verified 2026-07.
   { provider:'Azure',   name:'East US',     instance:'NC24ads A100 v4', code:'az-eastus',  cost:3.67, committed:2.57, committed3yr:1.83, spot:0.73, carbon:385 },
   { provider:'Azure',   name:'West US 2',   instance:'NC24ads A100 v4', code:'az-westus2', cost:3.67, committed:2.57, committed3yr:1.83, spot:0.73, carbon:130 },
-  // GCP — switched to a2-ultragpu-1g (1×A100 80GB) 2026-07 to match the 80GB
+  // GCP: switched to a2-ultragpu-1g (1×A100 80GB) 2026-07 to match the 80GB
   // peers here (a2-highgpu is the 40GB part). Official sheet: OD $5.069, spot
   // $2.530; CUDs are sales-only for A2 Ultra, hence nulls.
   { provider:'GCP',     name:'Iowa',        instance:'a2-ultragpu-1g',  code:'us-central1',cost:5.07, committed:null, committed3yr:null, spot:2.53, carbon:470 },
   { provider:'GCP',     name:'N. Virginia', instance:'a2-ultragpu-1g',  code:'us-east4',   cost:5.07, committed:null, committed3yr:null, spot:2.53, carbon:385 },
   { provider:'GCP',     name:'Oregon',      instance:'a2-ultragpu-1g',  code:'us-west1',   cost:5.07, committed:null, committed3yr:null, spot:2.53, carbon:130 },
-  // OCI — BM.GPU.A100-v2.8 /8. Not re-verified 2026-07.
+  // OCI: BM.GPU.A100-v2.8 /8. Not re-verified 2026-07.
   { provider:'OCI',     name:'US East (Ashburn)',  instance:'BM.GPU.A100-v2 /8', code:'oci-ashburn', cost:5.00, committed:3.50, committed3yr:2.75, spot:2.50, carbon:385 },
   { provider:'OCI',     name:'US West (San Jose)', instance:'BM.GPU.A100-v2 /8', code:'oci-sanjose', cost:5.00, committed:3.50, committed3yr:2.75, spot:2.50, carbon:215 },
-  // Lambda Labs — A100 SXM 80GB $2.79 (official 2026-07; prior $1.29 figure
+  // Lambda Labs: A100 SXM 80GB $2.79 (official 2026-07; prior $1.29 figure
   // matched an older/40GB-class rate). Reserved est. 15%/25%; no spot.
   { provider:'Lambda Labs', name:'San Jose', instance:'A100 SXM 80GB', code:'lambda-us-west', cost:2.79, committed:2.37, committed3yr:2.09, spot:null, carbon:215 },
   { provider:'Lambda Labs', name:'Austin',   instance:'A100 SXM 80GB', code:'lambda-us-tx',   cost:2.79, committed:2.37, committed3yr:2.09, spot:null, carbon:410 },
-  // CoreWeave — A100 HGX $21.60/node = $2.70/GPU (2026-07 reports; up from
+  // CoreWeave: A100 HGX $21.60/node = $2.70/GPU (2026-07 reports; up from
   // $1.79). Committed est. 35%/55%; spot est. ~60% off.
   { provider:'CoreWeave', name:'US East (NJ)',       instance:'A100 SXM4', code:'cw-us-east', cost:2.70, committed:1.76, committed3yr:1.22, spot:1.08, carbon:390 },
   { provider:'CoreWeave', name:'US West (Las Vegas)',instance:'A100 SXM4', code:'cw-us-west', cost:2.70, committed:1.76, committed3yr:1.22, spot:1.08, carbon:320 },
-  // RunPod — A100 SXM 80GB Secure Cloud $1.49 (tracker-verified 2026-07-06;
+  // RunPod: A100 SXM 80GB Secure Cloud $1.49 (tracker-verified 2026-07-06;
   // down from $1.90). Committed est. ~25%; spot est. Community-tier.
   { provider:'RunPod', name:'US East (VA)', instance:'A100 SXM', code:'rp-us-east', cost:1.49, committed:1.12, committed3yr:1.12, spot:0.87, carbon:385 },
   { provider:'RunPod', name:'US West (OR)', instance:'A100 SXM', code:'rp-us-west', cost:1.49, committed:1.12, committed3yr:1.12, spot:0.87, carbon:130 },
-  // Crusoe — A100 80GB SXM $2.30 (official pricing page 2026-07; up from
+  // Crusoe: A100 80GB SXM $2.30 (official pricing page 2026-07; up from
   // $1.76). Spot contact-sales, not plotted; committed est. 20%/40%.
   { provider:'Crusoe', name:'Texas',       instance:'A100 80GB SXM', code:'crusoe-tx',  cost:2.30, committed:1.84, committed3yr:1.38, spot:null, carbon:40  },
   { provider:'Crusoe', name:'Virginia',    instance:'A100 80GB SXM', code:'crusoe-va',  cost:2.30, committed:1.84, committed3yr:1.38, spot:null, carbon:385 },
@@ -1274,33 +1291,34 @@ const PROVIDERS = {
   CoreWeave:     { color: '#2384A3' },
   RunPod:        { color: '#A8542F' },
   Crusoe:        { color: '#0F7080' },
+  Nebius:        { color: '#A6435C' },
   Colo:          { color: '#55605B' },
   'Corp DC':     { color: '#9A6A1E' },
 };
-// All US data points — A10G (24GB VRAM)
+// All US data points: A10G (24GB VRAM)
 const REGIONS_A10 = [
-  // AWS — g5.2xlarge (1x A10G)
+  // AWS: g5.2xlarge (1x A10G)
   { provider:'AWS',         name:'N. Virginia',       instance:'g5.2xlarge',    code:'us-east-1',      cost:1.006, committed:0.592, committed3yr:0.402, spot:0.540, carbon:385 },
   { provider:'AWS',         name:'Ohio',               instance:'g5.2xlarge',    code:'us-east-2',      cost:1.006, committed:0.592, committed3yr:0.402, spot:0.540, carbon:540 },
   { provider:'AWS',         name:'Oregon',             instance:'g5.2xlarge',    code:'us-west-2',      cost:1.006, committed:0.592, committed3yr:0.402, spot:0.540, carbon:130 },
   { provider:'AWS',         name:'N. California',      instance:'g5.2xlarge',    code:'us-west-1',      cost:1.210, committed:0.712, committed3yr:0.484, spot:0.650, carbon:215 },
-  // Azure — NC8ads A10 v4
+  // Azure: NC8ads A10 v4
   { provider:'Azure',       name:'East US',            instance:'NC8ads A10 v4', code:'az-eastus',      cost:1.430, committed:1.100, committed3yr:0.858, spot:0.264, carbon:385 },
   { provider:'Azure',       name:'West US 2',          instance:'NC8ads A10 v4', code:'az-westus2',     cost:1.570, committed:1.209, committed3yr:0.942, spot:0.290, carbon:130 },
-  // GCP — g2-standard-4 (1x L4)
+  // GCP: g2-standard-4 (1x L4)
   { provider:'GCP',         name:'Iowa',               instance:'g2-standard-4', code:'us-central1',    cost:0.707, committed:0.445, committed3yr:0.318, spot:0.311, carbon:470 },
   { provider:'GCP',         name:'S. Carolina',        instance:'g2-standard-4', code:'us-east1',       cost:0.707, committed:0.445, committed3yr:0.318, spot:0.311, carbon:370 },
   { provider:'GCP',         name:'N. Virginia',        instance:'g2-standard-4', code:'us-east4',       cost:0.777, committed:0.489, committed3yr:0.350, spot:0.342, carbon:385 },
   { provider:'GCP',         name:'Oregon',             instance:'g2-standard-4', code:'us-west1',       cost:0.777, committed:0.489, committed3yr:0.350, spot:0.342, carbon:130 },
-  // OCI — VM.GPU.A10.1
+  // OCI: VM.GPU.A10.1
   { provider:'OCI',         name:'US East (Ashburn)',   instance:'VM.GPU.A10.1',  code:'oci-ashburn',    cost:2.000, committed:1.400, committed3yr:1.100, spot:1.000, carbon:385 },
   { provider:'OCI',         name:'US West (San Jose)',  instance:'VM.GPU.A10.1',  code:'oci-sanjose',    cost:2.000, committed:1.400, committed3yr:1.100, spot:1.000, carbon:215 },
-  // Lambda Labs — removed 2026-07: A10 no longer on Lambda's instance price list
+  // Lambda Labs: removed 2026-07: A10 no longer on Lambda's instance price list
   // CoreWeave
   { provider:'CoreWeave',   name:'US East (NJ)',        instance:'A10 on-demand', code:'cw-us-east',     cost:0.850, committed:0.680, committed3yr:0.553, spot:0.425, carbon:390 },
   { provider:'CoreWeave',   name:'US West (Las Vegas)', instance:'A10 on-demand', code:'cw-us-west',     cost:0.850, committed:0.680, committed3yr:0.553, spot:0.425, carbon:320 },
-  // RunPod — no A10G tier
-  // Crusoe — no A10G tier
+  // RunPod: no A10G tier
+  // Crusoe: no A10G tier
 ];
 // ── Colocation metro presets ───────────────────────────────────────────────
 const COLO_METROS = {
@@ -1356,18 +1374,19 @@ const CORP_DC_METROS = {
 let currentColoMetro   = 'ashburn';
 let currentCorpDcMetro = 'nynj';
 // Hardware amortization per GPU type (3yr = 26,280hrs)
-// System capex ($) and GPUs per system — editable in the assumptions panel below.
-// v2 note: B200 system default was $1.2M (comment said $300k — mismatch). 2026 quotes
+// System capex ($) and GPUs per system, editable in the assumptions panel below.
+// Note: B200 system default was $1.2M (comment said $300k, a mismatch). 2026 quotes
 // span ~$290k street (Mar 2026, DeployBase) to $515k (2024 list price). Default: $400k.
 const HW_CAPEX = {
-  b200: { sys: 400000, gpus: 8 },   // 8×B200 system — edit to your quote
-  h200: { sys: 450000, gpus: 8 },   // DGX H200 class ~$400–500k
+  b300: { sys: 450000, gpus: 8 },   // 8x B300 system (est.), edit to your quote
+  b200: { sys: 400000, gpus: 8 },   // 8x B200 system, edit to your quote
+  h200: { sys: 450000, gpus: 8 },   // DGX H200 class ~$400-500k
   h100: { sys: 300000, gpus: 8 },   // DGX H100 class
   a100: { sys: 200000, gpus: 8 },
   l40s: { sys:  60000, gpus: 4 },
   a10:  { sys:  15000, gpus: 4 },
 };
-let amortHours = 26280;             // 3-year default (8,760 h/yr × 3) — editable 1–5 yr
+let amortHours = 26280;             // 3-year default (8,760 h/yr x 3), editable 1-5 yr
 let capexOverride = {};             // per-GPU user overrides
 function hwAmort(g) {
   const c = HW_CAPEX[g] || HW_CAPEX.a10;
@@ -1379,6 +1398,7 @@ const HW_AMORT = new Proxy({}, { get: (_, k) => hwAmort(k) });
 // GPU TDP in watts (SXM/server-class rated TDP, single GPU)
 // Source: NVIDIA data sheets. Used to convert grid gCO2/kWh → gCO2/GPU-hr.
 const GPU_TDP = {
+  b300: 1400,  // B300 SXM ~1400W TDP (Blackwell Ultra)
   b200: 1000,  // B200 SXM ~1000W TDP
   h200:  700,  // H200 SXM5 ~700W TDP
   h100:  700,  // H100 SXM5 ~700W TDP
@@ -1388,12 +1408,16 @@ const GPU_TDP = {
 };
 // Per-GPU BF16/FP16 dense tensor-core throughput, in TFLOPS.
 // This is the industry-comparable baseline figure published on every GPU's
-// datasheet — measured the same way across all SKUs in this set. Realized
+// datasheet: measured the same way across all SKUs in this set. Realized
 // throughput on tuned training workloads is typically 35-55% of these values
 // (MFU); the per-FLOP view does NOT apply an MFU haircut and should be re-run
 // with workload-specific utilization for decision-grade comparisons.
 // Source: NVIDIA datasheets (H100/H200/B200/A100), L40S/A10G product briefs.
 const GPU_FLOPS = {
+  b300: 2500,  // B300 SXM: est., no official NVIDIA BF16-dense datasheet figure
+               // found this pass; scaled from B200 using Blackwell Ultra's
+               // published compute uplift. Revisit against NVIDIA's own
+               // datasheet when published.
   b200: 2250,  // B200 SXM: 2.25 PFLOPS BF16
   h200:  989,  // H200 SXM5 (same compute as H100)
   h100:  989,  // H100 SXM5: 989 TFLOPS BF16
@@ -1412,7 +1436,7 @@ function gridToGpuCarbon(gridGco2PerKwh) {
   const tdpKw = (GPU_TDP[gpuType] || 150) / 1000;
   return +(gridGco2PerKwh * tdpKw).toFixed(1);
 }
-// Colo and Corp DC regions — dynamically built per GPU type
+// Colo and Corp DC regions: dynamically built per GPU type
 // Non-hardware components (power, cooling, space, network) stay constant
 // Hardware amortization scales with GPU generation
 function buildColoCorpDC(gpu) {
@@ -1423,7 +1447,7 @@ function buildColoCorpDC(gpu) {
   // v2: power & cooling components are calibrated to an H100-class device (700W).
   // Scale by the selected GPU's TDP so an A10 (150W) doesn't pay H100 power and a
   // B200 (1000W) doesn't get it for free. Space/network left unscaled (disclosed
-  // simplification — density effects ignored).
+  // simplification: density effects ignored).
   const tdpScale = (GPU_TDP[gpu] || 700) / 700;
   const sc = v => +((v || 0) * tdpScale).toFixed(3);
   const coloStdComps  = { hw, power:sc(cm.pStd),   cooling:sc(cm.cooling), space:cm.space, network:cm.network };
@@ -1433,36 +1457,37 @@ function buildColoCorpDC(gpu) {
   const dcMargComps   = { hw, power:sc(dm.marginal.power), cooling:sc(dm.marginal.cooling), space:0, network:dm.marginal.network, staff:0 };
   const sum = o => +Object.values(o).reduce((a,b)=>a+b,0).toFixed(3);
   return [
-    { provider:'Colo', name:`${cm.label} (Standard Grid)`, instance:`${gpu.toUpperCase()} — owned hardware`, code:'colo-std',
+    { provider:'Colo', name:`${cm.label} (Standard Grid)`, instance:`${gpu.toUpperCase()} (owned hardware)`, code:'colo-std',
       cost:null, committed:null, committed3yr:sum(coloStdComps), spot:null, carbon:cm.cStd, coloOnly:true,
       components: coloStdComps },
-    { provider:'Colo', name:`${cm.label} (PPA)`, instance:`${gpu.toUpperCase()} — owned hardware`, code:'colo-green',
+    { provider:'Colo', name:`${cm.label} (PPA)`, instance:`${gpu.toUpperCase()} (owned hardware)`, code:'colo-green',
       cost:null, committed:null, committed3yr:sum(coloPPAComps), spot:null, carbon:cm.cGreen, coloOnly:true,
       components: coloPPAComps },
-    { provider:'Corp DC', name:`${dm.label} — New Build`, instance:`${gpu.toUpperCase()} — owned hardware`, code:'corpdc-nynj-new',
+    { provider:'Corp DC', name:`${dm.label}, New Build`, instance:`${gpu.toUpperCase()} (owned hardware)`, code:'corpdc-nynj-new',
       cost:null, committed:null, committed3yr:sum(dcNewComps), spot:null, carbon:dm.carbon, coloOnly:true,
       components: dcNewComps },
-    { provider:'Corp DC', name:`${dm.label} — Existing`, instance:`${gpu.toUpperCase()} — owned hardware`, code:'corpdc-nynj-existing',
+    { provider:'Corp DC', name:`${dm.label}, Existing`, instance:`${gpu.toUpperCase()} (owned hardware)`, code:'corpdc-nynj-existing',
       cost:null, committed:null, committed3yr:sum(dcExistComps), spot:null, carbon:dm.carbon, coloOnly:true,
       components: dcExistComps },
-    { provider:'Corp DC', name:`${dm.label} — Marginal Cost`, instance:`${gpu.toUpperCase()} — owned hardware`, code:'corpdc-nynj-marginal',
+    { provider:'Corp DC', name:`${dm.label}, Marginal Cost`, instance:`${gpu.toUpperCase()} (owned hardware)`, code:'corpdc-nynj-marginal',
       cost:null, committed:null, committed3yr:sum(dcMargComps), spot:null, carbon:dm.carbon, coloOnly:true,
       components: dcMargComps },
   ];
 }
 // Keep COLO_CORPDC_REGIONS for backward compat (used during metro changes)
 const COLO_CORPDC_REGIONS = () => buildColoCorpDC(gpuType);
-// Active regions — default to H100 + colo/corpDC
+// Active regions: default to H100 + colo/corpDC
 // Factory-pristine snapshots of the cloud datasets, captured before any user
 // edit can mutate the shared region objects. setGpuType() rebuilds DEFAULTS
-// from these so "Reset to defaults" always restores true factory values —
-// previously a price edit + a GPU-type switch (or any hardware-assumption
+// from these so "Reset to defaults" always restores true factory values.
+// Previously a price edit plus a GPU-type switch (or any hardware-assumption
 // change, which calls setGpuType) silently baked the edit into DEFAULTS.
 const PRISTINE_SNAP = rs => rs.map(r => ({
   cost: r.cost, committed: r.committed, committed3yr: r.committed3yr,
   spot: r.spot, carbon: r.carbon
 }));
 const PRISTINE = {
+  b300: PRISTINE_SNAP(REGIONS_B300),
   b200: PRISTINE_SNAP(REGIONS_B200), h200: PRISTINE_SNAP(REGIONS_H200),
   h100: PRISTINE_SNAP(REGIONS_H100), a100: PRISTINE_SNAP(REGIONS_A100),
   l40s: PRISTINE_SNAP(REGIONS_L40S), a10:  PRISTINE_SNAP(REGIONS_A10),
@@ -1474,7 +1499,8 @@ function setGpuType(type) {
   gpuType = type;
   if (typeof syncCapexInput === 'function' && _prevType !== type) setTimeout(syncCapexInput, 0);
   const coloCorp = buildColoCorpDC(type);
-  if (type === 'b200')       regions = [...REGIONS_B200, ...coloCorp];
+  if (type === 'b300')       regions = [...REGIONS_B300, ...coloCorp];
+  else if (type === 'b200')  regions = [...REGIONS_B200, ...coloCorp];
   else if (type === 'h100')  regions = [...REGIONS_H100, ...coloCorp];
   else if (type === 'h200')  regions = [...REGIONS_H200, ...coloCorp];
   else if (type === 'a100')  regions = [...REGIONS_A100, ...coloCorp];
@@ -1491,8 +1517,10 @@ function setGpuType(type) {
   const keepColo   = visibleProviders.has('Colo');
   const keepCorpDC = visibleProviders.has('Corp DC');
   visibleProviders.clear();
-  if (type === 'b200') {
-    ['AWS', 'CoreWeave', 'Lambda Labs', 'RunPod', 'Colo', 'Corp DC'].forEach(p => visibleProviders.add(p));
+  if (type === 'b300') {
+    ['RunPod', 'Nebius', 'Colo', 'Corp DC'].forEach(p => visibleProviders.add(p));
+  } else if (type === 'b200') {
+    ['AWS', 'CoreWeave', 'Lambda Labs', 'RunPod', 'Nebius', 'Colo', 'Corp DC'].forEach(p => visibleProviders.add(p));
   } else {
     ['AWS', 'Azure', 'GCP', 'OCI'].forEach(p => visibleProviders.add(p));
   }
@@ -1500,7 +1528,7 @@ function setGpuType(type) {
   if (keepColo)   visibleProviders.add('Colo');
   if (keepCorpDC) visibleProviders.add('Corp DC');
   // Update button styles
-  ['b200','h200','h100','a100','l40s','a10'].forEach(t => {
+  ['b300','b200','h200','h100','a100','l40s','a10'].forEach(t => {
     const btn = document.getElementById(`gpuBtn-${t}`);
     if (!btn) return;
     if (t === type) {
@@ -1511,9 +1539,9 @@ function setGpuType(type) {
       btn.style.fontWeight = '400'; btn.style.borderColor = '#D8DDD9';
     }
   });
-  const subtitles = { b200:'B200 (192GB SXM)', h200:'H200 (141GB SXM5)', h100:'H100 (80GB SXM5)', a100:'A100 (80GB)', l40s:'L40S (48GB)', a10:'A10G (24GB)' };
+  const subtitles = { b300:'B300 (288GB SXM)', b200:'B200 (192GB SXM)', h200:'H200 (141GB SXM5)', h100:'H100 (80GB SXM5)', a100:'A100 (80GB)', l40s:'L40S (48GB)', a10:'A10G (24GB)' };
   const sub = document.getElementById('chartSubtitle');
-  if (sub) sub.textContent = `Estimated GPU cost by provider and region with sustainability overlay · ${subtitles[type]}`;
+  if (sub) sub.textContent = `Compares GPU cost and carbon intensity across cloud, neocloud, and owned hardware, by provider and region · ${subtitles[type]}`;
   DEFAULTS.length = 0;
   const pristineCloud = PRISTINE[type] || [];
   regions.forEach((r, i) => {
@@ -1562,12 +1590,18 @@ const pad = { top:36, right:40, bottom:110, left:150 };
 const cW = W-pad.left-pad.right;
 const cH = H-pad.top-pad.bottom;
 const xMin=0;
-// xMax computed dynamically in buildChart() from GPU TDP — defined there as local const
+// xMax computed dynamically in buildChart() from GPU TDP, defined there as local const
 // Y-bounds per GPU type and pricing mode
-// v2.1: b200 bounds re-fit to the refreshed 2026-07 prices — the v2 bounds
+// b200 bounds re-fit to the refreshed 2026-07 prices; the previous bounds
 // (OD max 12.00, 1yr max 8.50, 3yr max 6.00) plotted AWS OD $14.24, AWS/GCP
 // 1yr $11.2/$11.1 and GCP 3yr $7.09 below the chart floor.
 const Y_BOUNDS_ALL = {
+  b300: {
+    ondemand:     { yMin: 5.50, yMax: 18.50 },
+    committed:    { yMin: 4.50, yMax: 14.00 },
+    committed3yr: { yMin: 1.80, yMax: 10.00 },
+    spot:         { yMin: 3.00, yMax:  6.50 },
+  },
   b200: {
     ondemand:     { yMin: 4.50, yMax: 15.50 },
     committed:    { yMin: 3.50, yMax: 12.50 },
@@ -1605,9 +1639,9 @@ const Y_BOUNDS_ALL = {
     spot:         { yMin: 0.15, yMax:  1.12 },
   },
 };
-// Active Y_BOUNDS reference — updated when GPU type changes
+// Active Y_BOUNDS reference, updated when GPU type changes
 let Y_BOUNDS = Y_BOUNDS_ALL['h100'];
-// Provider annotation data — outer scope so applyPricingMode can reference it
+// Provider annotation data: outer scope so applyPricingMode can reference it
 // Provider annotation colors (static)
 const PROVIDER_COLORS = {
   OCI:           '#A63A2B',
@@ -1618,11 +1652,12 @@ const PROVIDER_COLORS = {
   GCP:           '#4C8C3F',
   RunPod:        '#A8542F',
   Crusoe:        '#0F7080',
+  Nebius:        '#A6435C',
   Colo:          '#55605B',
   'Corp DC':     '#9A6A1E',
 };
 // Compute averages dynamically from current regions data
-// ── GPU count — scales monthly cost labels only ───────────────────────────
+// GPU count : scales monthly cost labels only 
 const GPU_COUNT_TIERS = [1, 2, 4, 8, 16, 32, 64]; // 7 positions
 let gpuCountTierIdx = 0;
 let gpuCountCustom  = 64;
@@ -1710,11 +1745,17 @@ function computeProviderAnnotations() {
     };
   });
 }
-// Live reference — updated before each chart rebuild
+// Live reference: updated before each chart rebuild
 let providerAnnotations = computeProviderAnnotations();
 // Per-mode nudges to avoid label clustering
 // Per-mode nudges vary by GPU type (price levels shift clusters)
 const PROVIDER_NUDGE_ALL = {
+  b300: {
+    ondemand:     {},
+    committed:    {},
+    committed3yr: { Colo: 10, 'Corp DC': -10 },
+    spot:         {},
+  },
   b200: {
     ondemand:     { AWS: -8, CoreWeave: 8, 'Lambda Labs': 10, RunPod: -10 },
     committed:    { AWS: 8, CoreWeave: -10 },
@@ -1747,28 +1788,31 @@ const PROVIDER_NUDGE_ALL = {
   },
 };
 let providerNudge = PROVIDER_NUDGE_ALL['h100'];
-// Scale functions — recalculated in buildChart()
+// Scale functions: recalculated in buildChart()
 let xS, yScale;
 function buildChart() {
   // Recompute provider averages from current regions data (updated by assumptions/metro)
   providerAnnotations = computeProviderAnnotations();
+  // Y-bounds are always derived from the data actually on screen (current GPU,
+  // pricing mode, egress state, and visible providers), so the chart is legible
+  // on first load and after every control change, not only when egress is on.
   let { yMin, yMax } = Y_BOUNDS[pricingMode] || Y_BOUNDS.ondemand;
-  // Expand/compress y-bounds when egress is active — visible providers only
-  if (egressTierIdx > 0) {
-    let egressMin = Infinity, egressMax = -Infinity;
+  {
+    let dataMin = Infinity, dataMax = -Infinity;
     regions.forEach(r => {
       if (!visibleProviders.has(r.provider)) return;
       const price = getPrice(r);
       if (price === null) return;
       const plotPrice = price + getEgressAddon(r.provider);
-      if (plotPrice < egressMin) egressMin = plotPrice;
-      if (plotPrice > egressMax) egressMax = plotPrice;
+      if (plotPrice < dataMin) dataMin = plotPrice;
+      if (plotPrice > dataMax) dataMax = plotPrice;
     });
-    if (egressMax > -Infinity) {
-      const range = egressMax - egressMin;
-      yMin = +(egressMin - range * 0.12).toFixed(2);
-      yMax = +(egressMax + range * 0.12).toFixed(2);
+    if (dataMax > -Infinity) {
+      const range = Math.max(dataMax - dataMin, dataMax * 0.06, 0.01);
+      yMin = Math.max(0, +(dataMin - range * 0.15).toFixed(2));
+      yMax = +(dataMax + range * 0.15).toFixed(2);
     }
+    // else: no visible data, fall back to the static bounds above
   }
   // x inverted: high carbon → left, low carbon → right
   // xMax = max grid intensity (580 gCO2/kWh) × GPU TDP in kW = gCO2/GPU-hr
@@ -1781,7 +1825,7 @@ function buildChart() {
   // When viewMode === 'perflop', re-project axes:
   //   Y = TFLOPS per $/hr  (higher = better; scale inverted so top = best)
   //   X = TFLOPS per kgCO2/hr  (higher = better; right = best, matches raw view)
-  // Call sites still pass $/hr and gCO2/kWh — transform happens inside scale fns.
+  // Call sites still pass $/hr and gCO2/kWh; the transform happens inside scale fns.
   if (viewMode === 'perflop') {
     const flops = currentFlops();
     let yFlopMin = Infinity, yFlopMax = -Infinity;
@@ -1818,7 +1862,7 @@ function buildChart() {
   } else {
     buildChart._perflop = null;
   }
-  // Quadrant dividers — midpoint of carbon axis in gCO2/GPU-hr units
+  // Quadrant dividers: midpoint of carbon axis in gCO2/GPU-hr units
   const midX = pad.left + cW / 2;   // geometric midpoint of chart width
   // Y midpoint: geometric center in per-FLOP view (since the y-axis is non-linear
   // relative to $/hr there); otherwise the midpoint of the visible price range.
@@ -1834,7 +1878,7 @@ svg += `<rect x="${midX}"     y="${midY}"     width="${pad.left+cW-midX}" height
 // Quadrant dividers
 svg += `<line x1="${midX}" y1="${pad.top}" x2="${midX}" y2="${pad.top+cH}" stroke="#D8DDD9" stroke-width="1" stroke-dasharray="4 4"/>`;
 svg += `<line x1="${pad.left}" y1="${midY}" x2="${pad.left+cW}" y2="${midY}" stroke="#D8DDD9" stroke-width="1" stroke-dasharray="4 4"/>`;
-// Quadrant corner labels — mode-agnostic (top = better value, right = cleaner)
+// Quadrant corner labels: mode-agnostic (top = better value, right = cleaner)
 const _ql = [
   { x: pad.left+cW-8, y: pad.top+13,   a:'end',   t:'FAVORABLE · COST + CARBON' },
   { x: pad.left+8,    y: pad.top+13,   a:'start', t:'COST-FAVORED' },
@@ -1845,7 +1889,7 @@ _ql.forEach(q => { svg += `<text x="${q.x}" y="${q.y}" text-anchor="${q.a}" font
 // Axis lines
 svg += `<line x1="${pad.left}" y1="${pad.top}"    x2="${pad.left}"    y2="${pad.top+cH}" class="axis-line"/>`;
 svg += `<line x1="${pad.left}" y1="${pad.top+cH}" x2="${pad.left+cW}" y2="${pad.top+cH}" class="axis-line"/>`;
-// ── Carbon reduction annotation — all pricing modes ──────────────────────
+// Carbon reduction annotation : all pricing modes 
 // Dynamically computed from visible data: finds the highest-carbon and
 // lowest-carbon regions across AWS, Azure, and GCP that are currently visible,
 // then shows the bracket + % reduction between them.
@@ -1866,14 +1910,14 @@ if (showAnnotation) {
     (r[annPriceField] + getEgressAddon(r.provider)) <= yMax * 1.05
   );
   if (annRegions.length >= 2) {
-    const NV_CARBON    = 385; // N. Virginia grid intensity (gCO2/kWh) — fixed reference point
+    const NV_CARBON    = 385; // N. Virginia grid intensity (gCO2/kWh), fixed reference point
     const NV_GPU_C     = gridToGpuCarbon(NV_CARBON); // gCO2/GPU-hr for current GPU
     const minCarbon    = Math.min(...annRegions.map(r => r.carbon).filter(c => c < NV_CARBON));
     if (!isNaN(minCarbon) && isFinite(minCarbon)) {
       const pctReduction = Math.round((1 - minCarbon / NV_CARBON) * 100); // % same regardless of TDP
       const annHighCx = xS(NV_CARBON);
       const annLowCx  = xS(minCarbon);
-      // Y bracket: only use AWS and GCP at the two carbon columns —
+      // Y bracket: only use AWS and GCP at the two carbon columns.
       // OCI and Azure at high-carbon columns have very different prices
       // and would push the bracket outside the meaningful range.
       const annCarbons = new Set([NV_CARBON, minCarbon]);
@@ -1892,7 +1936,7 @@ if (showAnnotation) {
         const bracketMax = Math.max(...usePrices);
         const annTop = yScale(bracketMin) - 10;
         const annBot = yScale(bracketMax) + 10;
-        // Determine best Y for bracket and text — prefer below, then above,
+        // Determine best Y for bracket and text: prefer below, then above,
         // then clamp. Use a wider clearance check (50px) to clear dot labels.
         const chartBottom = pad.top + cH - 30;
         const spaceBelow  = chartBottom - (annBot + 18 + 36);
@@ -1907,7 +1951,7 @@ if (showAnnotation) {
           textY1   = annLineY - 26;
           textY2   = annLineY - 14;
         } else {
-          // Constrained — place bracket at top of chart area, text above it
+          // Constrained: place bracket at top of chart area, text above it
           annLineY = Math.max(pad.top + 40, annTop - 18);
           textY1   = annLineY - 26;
           textY2   = annLineY - 14;
@@ -1928,7 +1972,7 @@ if (showAnnotation) {
         const includedClouds = [...new Set(annRegions.map(r => r.provider))].join(', ');
         const lowRegion = annRegions.find(r => r.carbon === minCarbon);
         const lowLabel  = lowRegion ? lowRegion.name : 'low-carbon region';
-        // ── Text placement — compute BEFORE rendering lines/arrow ─────────
+        // Text placement : compute BEFORE rendering lines/arrow 
         // Option A: use the vertical gap between Azure and OCI dots if large enough.
         const azureRs  = regions.filter(r => r.provider === 'Azure' && visibleProviders.has('Azure') && r[annPriceField] != null);
         const ociRs    = regions.filter(r => r.provider === 'OCI'   && visibleProviders.has('OCI')   && r[annPriceField] != null);
@@ -2001,7 +2045,7 @@ const _xTitleText = viewMode === 'perflop'
   ? `Carbon Efficiency · TFLOPS / kgCO2 (BF16 dense · ${currentFlops().toLocaleString()} TFLOPS)`
   : `Carbon Efficiency · gCO2/GPU-hr (${GPU_TDP[gpuType] || 150}W TDP)`;
 svg += `<text x="${xMidLabel}" y="${xTitleY + 4}" text-anchor="middle" class="axis-label" fill="#16201C">${_xTitleText}</text>`;
-// Egress legend — bottom-left margin with faint bounding box
+// Egress legend: bottom-left margin with faint bounding box
 // boxPad controls all four sides uniformly; content positions derived from box origin
 const dotR2 = 4, dotGap2 = 14;
 const dotsCount2 = 4;
@@ -2048,7 +2092,7 @@ const yArrowTop = pad.top + 20;
 const yArrowBot = pad.top + cH - 20;
 const yMidLabel = (yArrowTop + yArrowBot) / 2;
 svg += `<line x1="${yTitleX}" y1="${yArrowBot}" x2="${yTitleX}" y2="${yArrowTop}" stroke="#6A7872" stroke-width="1" marker-end="url(#arrowR)"/>`;
-const _yTitleText = viewMode === 'perflop' ? 'TFLOPS / $' : 'GPU/$';
+const _yTitleText = viewMode === 'perflop' ? 'TFLOPS / $' : 'Cost Efficiency';
 svg += `<text x="${yTitleX - 4}" y="${yMidLabel}" text-anchor="middle"
   class="axis-label" fill="#16201C"
   transform="rotate(-90,${yTitleX - 4},${yMidLabel})">${_yTitleText}</text>`;
@@ -2106,7 +2150,7 @@ const geoAnnotations = [
   { name: 'Crusoe (flare gas)', avgCarbon:  40 },
   { name: 'Colo (PPA)',         avgCarbon:  15 },
 ];
-// Dynamic vertical staggering — sort visible labels by cx, then assign row
+// Dynamic vertical staggering: sort visible labels by cx, then assign row
 // based on minimum pixel gap to avoid overlap. Labels within MIN_GAP px
 // of each other are bumped to successively lower rows.
 const MIN_GAP = 58; // approximate label width at 9.5px Spectral
@@ -2142,10 +2186,10 @@ svg = `<defs>
   <marker id="arrowL" markerWidth="6" markerHeight="6" refX="1" refY="3" orient="auto"><path d="M6,0 L6,6 L0,3 z" fill="#6A7872"/></marker>
   <marker id="arrowAnn" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto"><path d="M0,0 L0,6 L6,3 z" fill="#16201C" opacity="0.85"/></marker>
 </defs>` + svg;
-// Set static SVG (axes, annotations, labels — no dots)
+// Set static SVG (axes, annotations, labels; no dots)
 document.getElementById('chart').innerHTML = svg;
 } // end buildChart()
-// Label offsets [dx, dy, anchor, leader] — outer scope so drawDots() can access
+// Label offsets [dx, dy, anchor, leader], outer scope so drawDots() can access
 const labelOffsets = {
   'AWS-us-east-1':        [ 14,   4, 'start', false],
   'AWS-us-east-2':        [ 14,   4, 'start', false],
@@ -2173,14 +2217,17 @@ const labelOffsets = {
   // RunPod
   'RunPod-rp-us-east':    [ 14,   4, 'start', false],
   'RunPod-rp-us-west':    [ 14,  -8, 'start', false],
-  // Crusoe — Texas uses flare gas (~40g CO2/kWh), unique x position far right
+  // Nebius
+  'Nebius-nebius-us-east':    [ 14,   4, 'start', false],
+  'Nebius-nebius-us-central': [-14,   4, 'end',   false],
+  // Crusoe: Texas uses flare gas (~40g CO2/kWh), unique x position far right
   'Crusoe-crusoe-tx':     [-14,   4, 'end',   false],
   'Crusoe-crusoe-va':     [ 14,  -8, 'start', false],
 };
 // ── Draw dots ────────────────────────────────────────────────────────────────
 let pricingMode = 'ondemand';
-let showEgress  = true;  // always on — egress cost encoded in dot border opacity
-let annotationVisible = true; // carbon reduction annotation toggle
+let showEgress  = true;  // always on: egress cost encoded in dot border opacity
+let annotationVisible = false; // carbon reduction annotation toggle
 let labelsVisible = true;     // dot labels toggle
 function getPrice(r) {
   if (r.coloOnly && pricingMode !== 'committed3yr') return null;
@@ -2189,10 +2236,10 @@ function getPrice(r) {
   if (pricingMode === 'committed')    return r.committed;
   return r.cost;
 }
-// Provider filter — independent toggles, all visible by default
-const PROVIDER_LIST = ['AWS', 'Azure', 'GCP', 'OCI', 'Lambda Labs', 'CoreWeave', 'RunPod', 'Crusoe', 'Colo', 'Corp DC'];
+// Provider filter: independent toggles, all visible by default
+const PROVIDER_LIST = ['AWS', 'Azure', 'GCP', 'OCI', 'Lambda Labs', 'CoreWeave', 'RunPod', 'Crusoe', 'Nebius', 'Colo', 'Corp DC'];
 const visibleProviders = new Set(['AWS', 'Azure', 'GCP', 'OCI']);
-// Lightweight dot visibility sync — no chart rebuild
+// Lightweight dot visibility sync, no chart rebuild
 function syncDotVisibility() {
   document.querySelectorAll('.region-group').forEach(g => {
     const p = g.getAttribute('data-provider');
@@ -2220,9 +2267,9 @@ function applyFilter() {
   syncDotVisibility();
   if (document.getElementById('tcoBody')?.style.display !== 'none') buildTCO();
 }
-// ── Egress cost tiers — outer scope ──────────────────────────────────────────
+// Egress cost tiers : outer scope 
 // v2.1: freeGB = monthly free allowance in GB, deducted before the rate is
-// applied. GCP kept at 0 ('varies' — allowances differ by tier/destination;
+// applied. GCP kept at 0 ('varies': allowances differ by tier/destination;
 // 0 is the conservative choice). Rate-0 providers are unlimited by definition.
 const EGRESS_TIER = {
   'AWS':          { tier: 'high',      color: '#A6531F', label: '$0.09/GB',  tb: '$90 / TB',   free: '100 GB/mo', ratePerGB: 0.090,  freeNote: '100 GB/mo', freeGB: 100 },
@@ -2233,6 +2280,10 @@ const EGRESS_TIER = {
   'CoreWeave':    { tier: 'zero',      color: '#2F7D5B', label: 'Free',      tb: '$0',         free: 'Unlimited', ratePerGB: 0.000,  freeNote: 'Unlimited', freeGB: null },
   'RunPod':       { tier: 'zero',      color: '#2F7D5B', label: 'Free',      tb: '$0',         free: 'Unlimited', ratePerGB: 0.000,  freeNote: 'Unlimited', freeGB: null },
   'Crusoe':       { tier: 'zero',      color: '#2F7D5B', label: 'Free',      tb: '$0',         free: 'Unlimited', ratePerGB: 0.000,  freeNote: 'Unlimited', freeGB: null },
+  // Nebius: no published egress rate found this pass; assumed zero, matching
+  // the neocloud convention every peer in this table follows. Revisit if a
+  // published rate surfaces.
+  'Nebius':       { tier: 'zero',      color: '#2F7D5B', label: 'Free',      tb: '$0',         free: 'Unlimited', ratePerGB: 0.000,  freeNote: 'Unlimited', freeGB: null },
   'Colo':         { tier: 'na',        color: null,      label: 'Internal',  tb: 'n/a',        free: 'n/a',       ratePerGB: null,   freeNote: 'Internal network', freeGB: null },
   'Corp DC':      { tier: 'na',        color: null,      label: 'Internal',  tb: 'n/a',        free: 'n/a',       ratePerGB: null,   freeNote: 'Internal network', freeGB: null },
 };
@@ -2268,11 +2319,11 @@ function buildEgressTable() {
         ${name}
       </td>
       <td style="text-align:center">${isNA
-        ? '<span class="assump-na">—</span>'
+        ? '<span class="assump-na">-</span>'
         : `<input class="assump-input" style="width:80px;" data-egress="${name}" data-field="ratePerGB" value="${eg.ratePerGB.toFixed(4)}">`}
       </td>
       <td style="text-align:center; font-family:'IBM Plex Mono',monospace; font-size:10px; color:#4A564F;" id="egress1tb-${name.replace(/\s/g,'_')}">
-        ${isNA ? '—' : eg.ratePerGB === 0 ? '$0' : '$' + (eg.ratePerGB * 1000).toFixed(2)}
+        ${isNA ? '-' : eg.ratePerGB === 0 ? '$0' : '$' + (eg.ratePerGB * 1000).toFixed(2)}
       </td>
       <td style="text-align:center">${isNA
         ? '<span class="assump-na">Internal</span>'
@@ -2450,7 +2501,7 @@ function drawDots() {
   });
   buildMobileList();
 }
-// ── Mobile ranked exhibit (shown ≤720px) — presentation only; reads the same
+// Mobile ranked exhibit (shown ≤720px) : presentation only; reads the same
 // state (regions, pricing mode, egress, GPU count, view mode) as the scatter.
 function buildMobileList() {
   const host = document.getElementById('mobileRank');
@@ -2507,7 +2558,7 @@ document.querySelectorAll('.filter-label[data-provider]').forEach(lbl => {
     lbl.classList.toggle('inactive', !visibleProviders.has(p));
   }
 });
-// Entrance animation — respect filter state
+// Entrance animation: respect filter state
 document.querySelectorAll('.region-group').forEach((g, i) => {
   const p = g.getAttribute('data-provider');
   const visible = visibleProviders.has(p);
@@ -2575,40 +2626,46 @@ function syncWorkloadBands() {
 // ── Source note content by GPU type + pricing mode ────────────────────────
 const SOURCE_NOTES = {
   a10: {
-    ondemand:     'On-demand (verified where noted, else carried): AWS g5.2xlarge (A10G) · Azure NC8ads A10 v4 · GCP g2-standard-4 (L4, official sheet 2026-07) · OCI VM.GPU.A10.1 $2.00 · CoreWeave A10. Lambda Labs removed 2026-07 (A10 no longer listed). Carbon: EPA eGRID 2024.',
+    ondemand:     'On-demand (verified where noted, else carried): AWS g5.2xlarge (A10G) · Azure NC8ads A10 v4 · GCP g2-standard-4 (L4, official sheet 2026-07) · OCI VM.GPU.A10.1 $2.00 · CoreWeave A10. Lambda Labs removed 2026-07 (A10 no longer listed). Carbon: eGRID2023 (EPA\'s most recent release).',
     committed:    'Committed/reserved (1yr): AWS ~$0.592/hr (Savings Plan) · Azure ~$1.10/hr · GCP $0.445/hr (CUD, official 2026-07) · OCI ~$1.40/hr (Universal Credits est.) · CoreWeave ~$0.680/hr (est.) · RunPod: no A10G tier. Carbon unchanged.',
     committed3yr: 'Committed/reserved (3yr): AWS ~$0.402/hr · Azure ~$0.858/hr · GCP $0.318/hr (CUD, official 2026-07) · OCI ~$1.10/hr (est.). Colo: owned A10G, 3yr amort + colo fees. Carbon unchanged.',
     spot:         'Spot: AWS ~$0.54/hr · Azure ~$0.264/hr · GCP $0.311/hr (official spot sheet 2026-07) · OCI preemptible ~$1.00/hr (est.) · CoreWeave ~$0.425/hr. Spot prices volatile.',
   },
   l40s: {
-    ondemand:     'On-demand: AWS g6e.2xlarge $2.02 · Azure NVads L40S $2.50 (both carried, not re-verified 2026-07) · CoreWeave L40S $1.40 (carried) · RunPod $0.99 (verified 2026-07-06, a price DROP from $1.22) · Crusoe $1.50 (added 2026-07, official price list). GCP: no L40S. Carbon: EPA eGRID 2024.',
+    ondemand:     'On-demand: AWS g6e.2xlarge $2.02 · Azure NVads L40S $2.50 (both carried, not re-verified 2026-07) · CoreWeave L40S $1.40 (carried) · RunPod $0.99 (verified 2026-07-06, a price DROP from $1.22) · Crusoe $1.50 (added 2026-07, official price list). GCP: no L40S. Carbon: eGRID2023 (EPA\'s most recent release).',
     committed:    'Committed/reserved (1yr): AWS SP ~30% off · Azure ~30% off · CoreWeave ~20% (est.) · RunPod ~25% (est.) · Crusoe ~20% (est., reserved is contact-sales). Carbon unchanged.',
     committed3yr: 'Committed/reserved (3yr): AWS ~50% off · Azure ~50% off · CoreWeave ~35% (est.) · Crusoe ~40% (est.). Colo: owned L40S, 3yr amort + colo fees. Carbon unchanged.',
     spot:         'Spot: AWS g6e ~$0.81 · Azure ~$0.50 · CoreWeave ~$0.70 · RunPod ~$0.58 (est. Community tier). Crusoe spot is contact-sales (not plotted). Spot prices volatile.',
   },
   a100: {
-    ondemand:     'On-demand: AWS p4d.24xlarge /8 (A100 40GB) $2.74 (carried) · Azure NC24ads A100 v4 (80GB) $3.67 (carried) · GCP a2-ultragpu-1g (80GB) $5.07 (official sheet 2026-07; switched from 40GB a2-highgpu for like-for-like) · OCI $5.00 (carried) · Lambda A100 SXM 80GB $2.79 (official 2026-07) · CoreWeave $2.70/GPU from $21.60 8-GPU node (2026-07) · RunPod $1.49 (verified 2026-07-06) · Crusoe 80GB SXM $2.30 (official 2026-07). Carbon: EPA eGRID 2024.',
+    ondemand:     'On-demand: AWS p4d.24xlarge /8 (A100 40GB) $2.74 (carried) · Azure NC24ads A100 v4 (80GB) $3.67 (carried) · GCP a2-ultragpu-1g (80GB) $5.07 (official sheet 2026-07; switched from 40GB a2-highgpu for like-for-like) · OCI $5.00 (carried) · Lambda A100 SXM 80GB $2.79 (official 2026-07) · CoreWeave $2.70/GPU from $21.60 8-GPU node (2026-07) · RunPod $1.49 (verified 2026-07-06) · Crusoe 80GB SXM $2.30 (official 2026-07). Carbon: eGRID2023 (EPA\'s most recent release).',
     committed:    'Committed/reserved (1yr): AWS SP ~30% · Azure ~30% · GCP A2-Ultra CUDs are sales-only (not plotted) · OCI ~30% (est.) · Lambda ~15% (est.) · CoreWeave ~35% (est.) · RunPod ~25% (est.) · Crusoe ~20% (est.). Carbon unchanged.',
     committed3yr: 'Committed/reserved (3yr): AWS ~50% · Azure ~50% · GCP: sales-only for A2 Ultra · OCI ~45% (est.) · Lambda ~25% (est.) · CoreWeave ~55% (est.) · Crusoe ~40% (est.). Colo: owned A100, 3yr amort + colo fees. Carbon unchanged.',
     spot:         'Spot: AWS ~$1.10 · Azure ~$0.73 · GCP $2.53 (official spot sheet 2026-07) · OCI preemptible ~$2.50 (est.) · CoreWeave ~$1.08 (est.) · RunPod ~$0.87 (est.). Lambda: no spot; Crusoe spot contact-sales. Volatile.',
   },
   h100: {
-    ondemand:     'On-demand (verified 2026-07): AWS p5.48xlarge $55.04/node = $6.88/GPU — note the former $3.90 figure was the Capacity Blocks rate, not on-demand · Azure NC40ads H100 v5 $6.98 (unchanged) · GCP a3-highgpu-8g $88.49/node = $11.06/GPU (official sheet; former $3.00 was a DWS-era rate) · OCI $10.00 flat list · Lambda $3.99 (up from $2.99) · CoreWeave $6.16 (unchanged) · RunPod $3.29 (up from $2.69) · Crusoe $3.90 (up from $2.74). Carbon: EPA eGRID 2024.',
-    committed:    'Committed/reserved (1yr): AWS SP est. ~35% · Azure reserved est. ~30% · GCP CUD $7.67/GPU (official) · OCI Universal Credits est. ~30% · Lambda est. ~15% · CoreWeave est. ~35% (published band 25–60%) · RunPod est. ~25% · Crusoe est. ~20%. Estimates marked est. are not published rates. Carbon unchanged.',
+    ondemand:     'On-demand (verified 2026-07): AWS p5.48xlarge $55.04/node = $6.88/GPU (the former $3.90 figure was the Capacity Blocks rate, not on-demand) · Azure NC40ads H100 v5 $6.98 (unchanged) · GCP a3-highgpu-8g $88.49/node = $11.06/GPU (official sheet; former $3.00 was a DWS-era rate) · OCI $10.00 flat list · Lambda $3.99 (up from $2.99) · CoreWeave $6.16 (unchanged) · RunPod $3.29 (up from $2.69) · Crusoe $3.90 (up from $2.74) · Nebius $3.85 (published 2026-07, one national rate). Carbon: eGRID2023 (EPA\'s most recent release).',
+    committed:    'Committed/reserved (1yr): AWS SP est. ~35% · Azure reserved est. ~30% · GCP CUD $7.67/GPU (official) · OCI Universal Credits est. ~30% · Lambda est. ~15% · CoreWeave est. ~35% (published band 25-60%) · RunPod est. ~25% · Crusoe est. ~20%. Estimates marked est. are not published rates. Carbon unchanged.',
     committed3yr: 'Committed/reserved (3yr): AWS $2.97/GPU (published 3yr RI no-upfront, 2026-06) · Azure est. ~50% · GCP CUD $4.86/GPU (official) · OCI est. ~45% · CoreWeave est. ~55%. Colo: owned H100, 3yr amort + colo fees. 3yr commitments carry GPU generation risk. Carbon unchanged.',
     spot:         'Spot (point-in-time snapshots, volatile): AWS $3.37/GPU (2026-06-21) · Azure $1.40 (2026-07) · GCP $4.74 (official spot sheet) · OCI preemptible est. ~50% · CoreWeave $2.46 (2026-07) · RunPod est. $1.91. Lambda: no spot; Crusoe: contact-sales.',
   },
   h200: {
-    ondemand:     'On-demand (verified 2026-07): AWS p5en.48xlarge $63.296/node = $7.91/GPU (p5e has no surfaced list rate) · GCP a3-ultragpu-8g $84.81/node = $10.60/GPU (official sheet) · OCI BM.GPU.H200.8 $10.00 list (Oracle GA announcement; was overstated at $12 here) · CoreWeave $6.31 (unchanged) · RunPod $4.39 (2026-07-06) · Crusoe $4.29 (official). Azure and Lambda removed: no verified public on-demand listing. Carbon: EPA eGRID 2024.',
+    ondemand:     'On-demand (verified 2026-07): AWS p5en.48xlarge $63.296/node = $7.91/GPU (p5e has no surfaced list rate) · GCP a3-ultragpu-8g $84.81/node = $10.60/GPU (official sheet) · OCI BM.GPU.H200.8 $10.00 list (Oracle GA announcement; was overstated at $12 here) · CoreWeave $6.31 (unchanged) · RunPod $4.39 (2026-07-06) · Crusoe $4.29 (official). Azure and Lambda removed: no verified public on-demand listing. Carbon: eGRID2023 (EPA\'s most recent release).',
     committed:    'Committed/reserved (1yr): AWS SP est. ~35% · GCP CUD $7.31/GPU (official) · OCI Universal Credits est. ~30% · CoreWeave est. ~35% · RunPod est. ~25% · Crusoe est. ~20%. Carbon unchanged.',
-    committed3yr: 'Committed/reserved (3yr): AWS est. ~55% · GCP CUD $4.65/GPU (official — note GCP H200 spot at $5.28 costs MORE than this 3yr rate) · OCI est. ~45% · CoreWeave est. ~55% · Crusoe est. ~40%. Colo: owned H200, 3yr amort + colo fees. Carbon unchanged.',
-    spot:         'Spot: GCP $5.28/GPU (official spot sheet — sits above GCP\'s own 3yr CUD) · OCI preemptible est. ~50% · CoreWeave $2.62 (2026-07) · RunPod est. $2.55. AWS p5en spot not verified this pass; Lambda no spot; Crusoe contact-sales. Volatile.',
+    committed3yr: 'Committed/reserved (3yr): AWS est. ~55% · GCP CUD $4.65/GPU (official; GCP H200 spot at $5.28 costs more than this 3yr rate) · OCI est. ~45% · CoreWeave est. ~55% · Crusoe est. ~40%. Colo: owned H200, 3yr amort + colo fees. Carbon unchanged.',
+    spot:         'Spot: GCP $5.28/GPU (official spot sheet, sits above GCP\'s own 3yr CUD) · OCI preemptible est. ~50% · CoreWeave $2.62 (2026-07) · RunPod est. $2.55. AWS p5en spot not verified this pass; Lambda no spot; Crusoe contact-sales. Volatile.',
   },
   b200: {
-    ondemand:     'B200 on-demand (verified 2026-07): AWS p6-b200.48xlarge $113.93/node = $14.24/GPU — now true on-demand, no longer Capacity Blocks-only · Lambda B200 SXM6 $6.69 (official; clusters are a separate $8.87–9.86 product) · CoreWeave $8.60 (unchanged) · RunPod $5.89 (2026-07-06; B300 now above it at $7.39). GCP a4-highgpu has NO on-demand tier (DWS/spot/CUD only — plotted in those modes). Azure: no public B200 HGX listing. OCI: GA Q1 2026, ~$14–16 reported, no published list. Crusoe: contact-sales. Carbon: EPA eGRID 2024.',
+    ondemand:     'B200 on-demand (verified 2026-07): AWS p6-b200.48xlarge $113.93/node = $14.24/GPU (now true on-demand, no longer Capacity Blocks-only) · Lambda B200 SXM6 $6.69 (official; clusters are a separate $8.87-9.86 product) · CoreWeave $8.60 (unchanged) · RunPod $5.89 (2026-07-06; B300 now above it at $7.39) · Nebius $5.50 (published 2026-07, one national rate). GCP a4-highgpu has NO on-demand tier (DWS/spot/CUD only, plotted in those modes). Azure: no public B200 HGX listing. OCI: GA Q1 2026, ~$14-16 reported, no published list. Crusoe: contact-sales. Carbon: eGRID2023 (EPA\'s most recent release).',
     committed:    'B200 1yr committed: AWS $11.22/GPU (1yr Compute SP no-upfront, published) · GCP CUD $11.12/GPU (official) · CoreWeave est. ~35% ($5.59; a $2.65 1yr promo was previously published but is no longer verifiable) · RunPod est. ~15% ($5.01). Lambda: contact-sales.',
     committed3yr: 'B200 3yr committed: AWS $6.15/GPU (3yr EC2 Instance SP, family/region-locked, published 2026-06) · GCP CUD $7.09/GPU (official). Colo/Corp DC uses owned-hardware amort: $400k system ÷ 8 GPUs ÷ 26,280 hrs ≈ $1.90/GPU-hr + facility costs (the previous note\'s "$5.71" figure was a math error). 3yr commitments carry significant GPU generation risk.',
-    spot:         'B200 spot: AWS ~$2.70/GPU (81% off; single-AZ snapshot, highly volatile) · GCP $4.28/GPU (official spot sheet — aggregators often mislabel this as on-demand) · CoreWeave $4.26 (carried, not re-verified). Lambda/RunPod: no public B200 spot. Volatile.',
+    spot:         'B200 spot: AWS ~$2.70/GPU (81% off; single-AZ snapshot, highly volatile) · GCP $4.28/GPU (official spot sheet; aggregators often mislabel this as on-demand) · CoreWeave $4.26 (carried, not re-verified). Lambda/RunPod: no public B200 spot. Volatile.',
+  },
+  b300: {
+    ondemand:     'B300 on-demand (new tier, added 2026-07): RunPod $7.39 (2026-06-30 reprice, Secure Cloud) · Nebius $7.85 (published 2026-07, one national rate). Not on a published on-demand rate card this pass: AWS, Azure, GCP, OCI, Lambda Labs (Superchip/GB300 access is contact-sales or account-executive only at CoreWeave and GCP/OCI\'s GB300 SKUs are a different paired-superchip unit of sale). Carbon: eGRID2023 (EPA\'s most recent release).',
+    committed:    'B300 committed/reserved: no published rate for any tracked provider this pass; RunPod and Nebius reserved capacity for this tier is contact-sales. Carbon unchanged.',
+    committed3yr: 'B300 3yr committed: no published reserved rate for any cloud or neocloud provider this pass. Colo/Corp DC: owned B300, 3yr amort + colo fees, using an estimated $450k 8-GPU system default (Q1 2026 DGX B300 system anchor ~$300k-350k; per-GPU street price ~$53k, 2026-07-05). Carbon unchanged.',
+    spot:         'B300 spot: no public spot or preemptible listing found for any tracked provider this pass. Revisit as B300 spot markets develop; treat as unpriced, not zero.',
   },
 };
 function syncAnnotationToggle() {
@@ -2617,12 +2674,12 @@ function syncAnnotationToggle() {
   const btn   = document.getElementById('annotationToggleBtn');
   const icon  = document.getElementById('annotationToggleIcon');
   if (!wrap) return;
-  // Show toggle on all pricing modes — annotation now works in all modes
+  // Show toggle on all pricing modes; annotation now works in all modes
   wrap.style.display = 'flex';
   if (label) label.textContent = annotationVisible ? 'Hide annotation' : 'Show annotation';
   if (btn) {
-    btn.style.opacity     = annotationVisible ? '1' : '0.35';
-    btn.style.borderColor = annotationVisible ? '#6A7872' : '#6A7872';
+    btn.style.borderColor = annotationVisible ? '#33413B' : '#D8DDD9';
+    btn.style.color       = annotationVisible ? '#4A564F' : '#6A7872';
   }
   if (icon) {
     icon.innerHTML = annotationVisible
@@ -2641,7 +2698,10 @@ function syncLabelsToggle() {
   const label = document.getElementById('labelsToggleLabel');
   const btn   = document.getElementById('labelsToggleBtn');
   const icon  = document.getElementById('labelsToggleIcon');
-  if (btn) btn.style.opacity = labelsVisible ? '1' : '0.35';
+  if (btn) {
+    btn.style.borderColor = labelsVisible ? '#33413B' : '#D8DDD9';
+    btn.style.color       = labelsVisible ? '#4A564F' : '#6A7872';
+  }
   if (label) label.textContent = labelsVisible ? 'Hide labels' : 'Show labels';
   if (icon) {
     icon.innerHTML = labelsVisible
@@ -2688,7 +2748,7 @@ function applyPricingMode(idx) {
   syncDotVisibility();
   if (document.getElementById('tcoBody')?.style.display !== 'none') {
     // v2.1: skip the mix reset when this mode change was triggered by syncMix
-    // itself — otherwise dragging a mix slider snapped the mix to 100% of the
+    // itself: otherwise dragging a mix slider snapped the mix to 100% of the
     // dominant tier, stomping the user's hand-set values.
     if (!applyPricingMode._fromMixSync) defaultMixFromPricingMode();
     buildTCO();
@@ -2720,7 +2780,7 @@ function updateEgressSliderUI(idx) {
     customDiv.style.opacity = idx === 3 ? '1' : '0.5';
     if (customInput) customInput.style.borderColor = idx === 3 ? '#4A564F' : '#D8DDD9';
   }
-  // Don't rebuild chart if the custom input currently has focus — applyCustomEgress handles it
+  // Don't rebuild chart if the custom input currently has focus; applyCustomEgress handles it
   if (idx === 3 && customInput && document.activeElement === customInput) return;
   buildChart();
   drawDots();
@@ -2755,7 +2815,7 @@ egressLabels.forEach((lbl, i) => {
     updateEgressSliderUI(i);
   });
 });
-// Custom input div click — activate tier 3
+// Custom input div click: activate tier 3
 const egressCustomDiv = document.getElementById('egressCustomDiv');
 if (egressCustomDiv) {
   egressCustomDiv.addEventListener('click', e => {
@@ -2789,7 +2849,7 @@ function syncMix(changed) {
   const spot = document.getElementById('tcoMixSpot');
   const warn = document.getElementById('tcoMixWarning');
   if (changed !== 'od') {
-    // Committed or spot moved — fill on-demand with remainder
+    // Committed or spot moved: fill on-demand with remainder
     const remainder = Math.max(0, 100 - +com.value - +spot.value);
     od.value = remainder;
     if (+com.value + +spot.value > 100) {
@@ -2800,14 +2860,14 @@ function syncMix(changed) {
   } else {
     const total = +od.value + +com.value + +spot.value;
     if (total > 100) {
-      // On-demand increased — reduce committed first, then spot
+      // On-demand increased: reduce committed first, then spot
       const excess = total - 100;
       const comReduction = Math.min(+com.value, excess);
       com.value = +com.value - comReduction;
       const remaining = excess - comReduction;
       if (remaining > 0) spot.value = Math.max(0, +spot.value - remaining);
     } else if (total < 100) {
-      // On-demand reduced — increase committed to fill gap
+      // On-demand reduced: increase committed to fill gap
       const gap = 100 - total;
       com.value = Math.min(100, +com.value + gap);
     }
@@ -2889,7 +2949,7 @@ function syncTCOInputsFromChart() {
   // Sync GPU count
   const tcoGpu = document.getElementById('tcoGpuCount');
   if (tcoGpu) tcoGpu.value = gpuCount;
-  // Sync egress — convert chart egress state to TB value
+  // Sync egress: convert chart egress state to TB value
   const tcoEg = document.getElementById('tcoEgress');
   if (tcoEg) {
     const tb = egressTierIdx === 0 ? 0
@@ -2927,7 +2987,7 @@ function buildTCO() {
   const horizon  = parseInt(document.getElementById('tcoHorizon').value) || 3;
   const horizonLabel = horizon === 1 ? '1-YEAR' : '3-YEAR';
   const heading = document.getElementById('tcoHeading');
-  if (heading) heading.textContent = `${horizonLabel} TOTAL COST OF OWNERSHIP — portfolio workload mix`;
+  if (heading) heading.textContent = `${horizonLabel} TOTAL COST OF OWNERSHIP: portfolio workload mix`;
   const egressTB = parseFloat(document.getElementById('tcoEgress').value) || 0;
   const mixOD    = (parseFloat(document.getElementById('tcoMixOD').value)   || 0) / 100;
   const mixCom   = (parseFloat(document.getElementById('tcoMixCom').value)  || 0) / 100;
@@ -2962,7 +3022,7 @@ function buildTCO() {
     if (rEff == null) return;
     const rMixSum = (rOD!=null?mixOD:0)+(rCom!=null?mixCom:0)+(rSpot!=null?mixSpot:0);
     // Region offers none of the tiers requested in the mix (e.g. B200 cloud
-    // rows have no 3yr/spot rates) — it is not comparable at this mix, so
+    // rows have no 3yr/spot rates); it is not comparable at this mix, so
     // exclude it rather than let the weight renormalisation zero-price it.
     if (rMixSum <= 0) return;
     const rWOD  = rOD   != null ? mixOD  / (rMixSum||1) : 0;
@@ -2998,7 +3058,7 @@ function buildTCO() {
     const mixSum = (odRate != null ? mixOD : 0) +
                    (comRate != null ? mixCom : 0) +
                    (spotRate != null ? mixSpot : 0);
-    // Provider has no rate for any tier in the requested mix — exclude it
+    // Provider has no rate for any tier in the requested mix; exclude it
     // (previously renormalised to all-zero weights → "$0" rows and a NaN%
     // break-even comparison).
     if (mixSum <= 0) return null;
@@ -3012,10 +3072,10 @@ function buildTCO() {
     const monthlyCost = (blendedHr + egRate) * gpus * 730;
     const egPct       = egRate > 0 ? Math.round((egRate / (blendedHr + egRate)) * 100) : 0;
     const color       = PROVIDER_COLORS[prov] || '#4A564F';
-    // Sort region rows cheapest first — N. Virginia wins ties as the assumed starting region
+    // Sort region rows cheapest first; N. Virginia wins ties as the assumed starting region
     const rRows = (regionRows[prov] || []).sort((a,b) => {
       if (Math.abs(a.rTCO - b.rTCO) < 0.01) {
-        // Tie — prefer N. Virginia, then alphabetical
+        // Tie: prefer N. Virginia, then alphabetical
         const aNV = a.name.includes('Virginia') ? -1 : 0;
         const bNV = b.name.includes('Virginia') ? -1 : 0;
         return aNV - bNV || a.name.localeCompare(b.name);
@@ -3090,7 +3150,7 @@ function buildTCO() {
     }
     // Track background
     svg += `<rect x="${LEFT_PAD}" y="${y}" width="${TRACK_W}" height="${BAR_H}" rx="3" fill="#FFFFFF"/>`;
-    // Stacked segments — cheapest-region decomposition, sums to the total
+    // Stacked segments: cheapest-region decomposition, sums to the total
     const egCost = r.egCostSeg != null ? r.egCostSeg : Math.max(0, r.annualTCO - r.odCost - r.comCost - r.spotCost);
     const segs = [
       { v: r.odCost,   color: SEG_OD   },
@@ -3109,7 +3169,7 @@ function buildTCO() {
     // Round cap on filled portion
     svg += `<rect x="${LEFT_PAD}" y="${y}" width="${toW(r.annualTCO)}" height="${BAR_H}" rx="3" fill="transparent"
       style="pointer-events:none"/>`;
-    // Total label — outside the right end of each bar
+    // Total label: outside the right end of each bar
     svg += `<text x="${LEFT_PAD + toW(r.annualTCO) + 8}" y="${y + BAR_H/2 + 4}"
       font-size="11" fill="${i === 0 ? '#0B6E4F' : '#4A564F'}"
       font-weight="${i === 0 ? '700' : '400'}">${fmt(r.annualTCO)}</text>`;
@@ -3135,7 +3195,7 @@ function buildTCO() {
       </tr>
     </thead><tbody id="tcoTableBody">`;
   results.forEach((r, i) => {
-    const premium  = i === 0 ? '—' : '+' + fmt(r.annualTCO - cheapest);
+    const premium  = i === 0 ? '-' : '+' + fmt(r.annualTCO - cheapest);
     const premPct  = i === 0 ? '' : `<span style="color:#6A7872"> (+${Math.round((r.annualTCO/cheapest-1)*100)}%)</span>`;
     const rowBg    = i === 0 ? 'background:#0B6E4F08;' : '';
     const tierParts = [];
@@ -3159,10 +3219,10 @@ function buildTCO() {
       <td style="padding:10px 8px; text-align:right; font-family:'IBM Plex Mono',monospace; color:#4A564F;">${fmt(r.monthlyCost)}</td>
       <td style="padding:10px 8px; text-align:right; font-family:'IBM Plex Mono',monospace; color:${i===0?'#0B6E4F':'#16201C'}; font-weight:${i===0?'700':'400'};">${fmt(r.annualTCO)}</td>
       <td style="padding:10px 8px; text-align:right; font-family:'IBM Plex Mono',monospace; color:#6A7872;">${premium}${premPct}</td>
-      <td style="padding:10px 8px; text-align:center; font-family:'IBM Plex Mono',monospace; color:#4A564F;">${r.carbon != null ? (gridToGpuCarbon(r.carbon) * gpus * 8760 / 1e6).toFixed(1) + ' t' : '—'}</td>
+      <td style="padding:10px 8px; text-align:center; font-family:'IBM Plex Mono',monospace; color:#4A564F;">${r.carbon != null ? (gridToGpuCarbon(r.carbon) * gpus * 8760 / 1e6).toFixed(1) + ' t' : '-'}</td>
       <td style="padding:10px 8px; font-size:11px; white-space:nowrap;">${tierParts.join(' · ')}</td>
     </tr>`;
-    // Region sub-rows — hidden by default
+    // Region sub-rows, hidden by default
     if (hasRegions) {
       html += `<tr id="tco-regions-${i}" style="display:none;"><td colspan="7" style="padding:0;">
         <table style="width:100%; border-collapse:collapse; background:#FAFBFA;">`;
@@ -3196,9 +3256,9 @@ function buildTCO() {
     const second = results[1];
     const savingPct = Math.round((1 - best.annualTCO / second.annualTCO) * 100);
     const saving = second.annualTCO - best.annualTCO;
-    beHtml = `<span style="color:#0B6E4F">${best.prov}</span> is the lowest cost option at this workload mix — ${fmt(saving/horizon)}/yr lower than <span style="color:#4A564F">${second.prov}</span> (${savingPct}%). `;
+    beHtml = `<span style="color:#0B6E4F">${best.prov}</span> is the lowest cost option at this workload mix, ${fmt(saving/horizon)}/yr lower than <span style="color:#4A564F">${second.prov}</span> (${savingPct}%). `;
   }
-  // Annual Scope 2 carbon estimate for lowest cost option — tCO2e/yr
+  // Annual Scope 2 carbon estimate for lowest cost option, tCO2e/yr
   if (results.length) {
     const best = results[0];
     if (best.carbon != null) {
@@ -3232,7 +3292,7 @@ function printProcurement() {
                      a100:'A100 (80GB)', l40s:'L40S (48GB)', a10:'A10G (24GB)' }[gpuType] || gpuType.toUpperCase();
   const modeLabel = { ondemand:'On-Demand', committed:'1yr Committed', committed3yr:'3yr Committed', spot:'Spot' }[pricingMode] || pricingMode;
   const horizon   = document.getElementById('tcoHorizon')?.value || 3;
-  const gpus      = document.getElementById('tcoGpuCount')?.value || '—';
+  const gpus      = document.getElementById('tcoGpuCount')?.value || '-';
   const util      = document.getElementById('tcoUtil')?.value || 100;
   const egressTB  = document.getElementById('tcoEgress')?.value || 0;
   const mixODv    = document.getElementById('tcoMixODVal')?.textContent || 0;
@@ -3241,7 +3301,7 @@ function printProcurement() {
   const heading   = tcoHeadingEl?.textContent?.replace('◈ ', '') || 'Total Cost of Ownership';
   const dateStr   = new Date().toLocaleDateString('en-US', { year:'numeric', month:'long', day:'numeric' });
   const providers = [...visibleProviders].filter(p => p !== 'Colo' && p !== 'Corp DC').join(', ');
-  // Adapt the dark SVG bar chart for light print — replace dark colors
+  // Adapt the dark SVG bar chart for light print: replace dark colors
   let barChartSvg = tcoResultsEl.querySelector('svg')?.outerHTML || '';
   barChartSvg = barChartSvg
     .replace(/fill="#FFFFFF"/g, 'fill="#f0f0f0"')
@@ -3274,7 +3334,7 @@ function printProcurement() {
     .replace(/color:#0B6E4F/g, 'color:#0B6E4F');
   const win = window.open('', '_blank');
   if (!win) {
-    alert('Pop-up blocked — please allow pop-ups for this page to export the procurement summary.');
+    alert('Pop-up blocked. Please allow pop-ups for this page to export the procurement summary.');
     return;
   }
   // Build HTML as string concatenation to avoid template literal / script tag conflicts
@@ -3341,7 +3401,7 @@ function printProcurement() {
     tableHtml,
     breakEven ? '<div class="breakeven">' + breakEven + '</div>' : '',
     '<div class="doc-footer">',
-    '<span>AI Workload Placement: Strategy Workbench</span>',
+    '<span>GPU Placement Explorer</span>',
     '<span>Pricing data sourced from public provider list prices · Not a financial commitment</span>',
     '<span>' + dateStr + '</span>',
     '</div>',
@@ -3352,7 +3412,7 @@ function printProcurement() {
   win.document.close();
 }
 // ── End TCO Calculator ─────────────────────────────────────────────────────
-// ── URL state — single codec shared by Share link and live persistence ─────
+// URL state : single codec shared by Share link and live persistence 
 // v2.1: v2 shipped two parallel URL formats (encodeState/restoreState for the
 // Share button vs persistToURL's g/v/p params written on every interaction).
 // A shared link's params were overwritten in the address bar moments after
@@ -3380,7 +3440,7 @@ function restoreState(search) {
   try {
     const p = new URLSearchParams(search);
     if (![...p.keys()].length) return;
-    // Hardware assumptions first — setGpuType consumes them when rebuilding
+    // Hardware assumptions first: setGpuType consumes them when rebuilding
     // the colo/corp-dc rows
     const ay = parseInt(p.get('ay'));
     if (!isNaN(ay)) {
@@ -3403,7 +3463,7 @@ function restoreState(search) {
     // Metros
     if (p.get('cm') && COLO_METROS[p.get('cm')]) setColoMetro(p.get('cm'));
     if (p.get('dm') && CORP_DC_METROS[p.get('dm')]) setCorpDcMetro(p.get('dm'));
-    // Visible providers — after setGpuType, which resets them to defaults
+    // Visible providers: after setGpuType, which resets them to defaults
     const prov = p.get('prov');
     if (prov) {
       visibleProviders.clear();
@@ -3552,7 +3612,7 @@ function exportCSV() {
   }
   // ── Section 5: Hardware Amortisation Reference ─────────────────────────
   // v2.1: dynamic horizon header; iterate HW_CAPEX keys and call hwAmort()
-  // directly — Object.entries on the HW_AMORT Proxy (no ownKeys trap) returned
+  // directly: Object.entries on the HW_AMORT Proxy (no ownKeys trap) returned
   // nothing, so this table exported empty in v2. B200 basis note also updated
   // to the $400k default (the old note carried a stale $300k).
   head('SECTION','Hardware Amortisation Reference (' + Math.round(amortHours/8760) + 'yr = ' + amortHours.toLocaleString() + ' hrs)');
@@ -3606,7 +3666,7 @@ function printChart() {
 // Prevent scroll wheel from changing custom input values
 document.getElementById('egressCustomInput')?.addEventListener('wheel', e => e.preventDefault(), { passive: false });
 document.getElementById('gpuCountCustom')?.addEventListener('wheel', e => e.preventDefault(), { passive: false });
-// (URL state restore runs below — it must run after DEFAULTS is initialized,
+// (URL state restore runs below; it must run after DEFAULTS is initialized,
 // because restoreState() → setGpuType() rebuilds DEFAULTS and hit a
 // temporal-dead-zone ReferenceError when called from up here.)
 // ── Assumptions Panel ─────────────────────────────────────────────────────────
@@ -3616,7 +3676,7 @@ let DEFAULTS = regions.map(r => ({
   spot: r.spot, carbon: r.carbon,
   components: r.components ? {...r.components} : null
 }));
-// Restore state from URL on load — placed after DEFAULTS init so that
+// Restore state from URL on load, placed after DEFAULTS init so that
 // setGpuType() (called inside restoreState) can safely rebuild DEFAULTS.
 if (window.location.search) restoreState(window.location.search);
 function setColoMetro(metroKey) {
@@ -3686,7 +3746,7 @@ function buildComponentRow(r, fields, totalColor) {
     const val = r.components[f];
     cells += `<td style="text-align:center">
       ${f === 'space' && val === 0 && r.name.includes('Marginal')
-        ? '<span class="assump-na">—</span>'
+        ? '<span class="assump-na">-</span>'
         : `<input class="assump-input" data-idx="${idx}" data-comp="${f}" value="${val.toFixed(3)}">`}
     </td>`;
   });
@@ -3712,10 +3772,10 @@ function buildAssumptionsTable() {
         <span class="assump-provider-dot" style="background:${col}"></span>
         ${r.provider} · ${r.name}
       </td>
-      <td style="text-align:center">${r.cost !== null    ? `<input class="assump-input" data-idx="${idx}" data-field="cost"         value="${r.cost.toFixed(3)}">` : '<span class="assump-na">—</span>'}</td>
-      <td style="text-align:center">${r.committed !== null ? `<input class="assump-input" data-idx="${idx}" data-field="committed"    value="${r.committed.toFixed(3)}">` : '<span class="assump-na">—</span>'}</td>
-      <td style="text-align:center">${r.committed3yr !== null ? `<input class="assump-input" data-idx="${idx}" data-field="committed3yr" value="${r.committed3yr.toFixed(3)}">` : '<span class="assump-na">—</span>'}</td>
-      <td style="text-align:center">${r.spot !== null    ? `<input class="assump-input" data-idx="${idx}" data-field="spot"         value="${r.spot.toFixed(3)}">` : '<span class="assump-na">—</span>'}</td>
+      <td style="text-align:center">${r.cost !== null    ? `<input class="assump-input" data-idx="${idx}" data-field="cost"         value="${r.cost.toFixed(3)}">` : '<span class="assump-na">-</span>'}</td>
+      <td style="text-align:center">${r.committed !== null ? `<input class="assump-input" data-idx="${idx}" data-field="committed"    value="${r.committed.toFixed(3)}">` : '<span class="assump-na">-</span>'}</td>
+      <td style="text-align:center">${r.committed3yr !== null ? `<input class="assump-input" data-idx="${idx}" data-field="committed3yr" value="${r.committed3yr.toFixed(3)}">` : '<span class="assump-na">-</span>'}</td>
+      <td style="text-align:center">${r.spot !== null    ? `<input class="assump-input" data-idx="${idx}" data-field="spot"         value="${r.spot.toFixed(3)}">` : '<span class="assump-na">-</span>'}</td>
       <td style="text-align:center"><input class="assump-input" data-idx="${idx}" data-field="carbon" value="${r.carbon}"></td>
     `;
     tbody.appendChild(tr);
@@ -3863,12 +3923,12 @@ function resetHwAssumptions() {
   syncCapexInput();
   setGpuType(gpuType);
 }
-// v2.1: persistence writes the SAME parameter set the Share button copies —
+// Persistence writes the same parameter set the Share button copies, so
 // the address bar is always a valid shareable link.
 function persistToURL() {
   try {
     history.replaceState(null, '', location.pathname + '?' + encodeState());
-  } catch (e) { /* sandboxed contexts — non-fatal */ }
+  } catch (e) { /* sandboxed contexts, non-fatal */ }
 }
 let _persistT;
 function schedulePersist() { clearTimeout(_persistT); _persistT = setTimeout(persistToURL, 150); }
@@ -3885,7 +3945,7 @@ function schedulePersist() { clearTimeout(_persistT); _persistT = setTimeout(per
   });
 })();
 // Boot-time UI sync. URL state is restored exactly once, above, via
-// restoreState() — the v2 second restore pass (its own g/v/p parameter
+// restoreState(): the second restore pass (its own g/v/p parameter
 // format) is gone with the codec unification.
 document.addEventListener('DOMContentLoaded', () => {
   setTimeout(syncCapexInput, 30);
