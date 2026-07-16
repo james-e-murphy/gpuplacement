@@ -6,7 +6,7 @@ It is designed for FinOps practitioners, engineers, architects, procurement team
 
 ## Current release candidate
 
-- Application: `gpu-placement-explorer-v1.0.0-rc3.3.html`
+- Application: `index.html`, released as `gpu-placement-explorer-v1.0.0-rc3.3.html`
 - Status: release candidate; not yet the final submitted `v1.0.0`
 - Rate/source review date: 2026-07-16
 
@@ -22,7 +22,7 @@ It is designed for FinOps practitioners, engineers, architects, procurement team
 - Average grid carbon intensity
 - Published hardware throughput ratios
 
-## Rate evidence in rc3
+## Rate evidence in rc3.3
 
 Every displayed rate is assigned an evidence basis. Hover over a point, inspect the mobile ranked view or export CSV to see the classification.
 
@@ -32,7 +32,7 @@ Every displayed rate is assigned an evidence basis. Hover over a point, inspect 
 - **Modeled discount scenario:** an analytical assumption, not a provider offer.
 - **Unverified carried value:** retained for scenario continuity but not release-grade evidence.
 
-An amber dashed halo marks modeled, unverified or dynamic-snapshot-dependent values. It is an evidence warning, not a cost or performance judgment.
+An amber diamond marker on a chart point marks modeled, unverified or dynamic-snapshot-dependent values. It is an evidence warning, not a cost or performance judgment.
 
 ## Use the hosted utility
 
@@ -40,7 +40,7 @@ Live site: `REPLACE_WITH_FULL_CUSTOM_DOMAIN_URL`
 
 Source repository: `REPLACE_WITH_FULL_GITHUB_REPOSITORY_URL`
 
-Submitted release: `v1.0.0`
+Planned release tag: `v1.0.0`
 
 ## Run locally
 
@@ -87,7 +87,7 @@ Supporting capabilities:
 
 ## Important disclosure
 
-This is a scenario model, not a procurement quote, emissions inventory or substitute for workload testing. Rates may include published, derived, dynamically retrieved, carried or explicitly modeled values. Carbon calculations use average grid intensity and GPU nameplate power and exclude facility PUE, other system system power, embodied emissions and marginal-emissions effects. Published FLOPS are hardware specifications and do not predict achieved workload throughput.
+This is a scenario model, not a procurement quote, emissions inventory or substitute for workload testing. Rates may include published, derived, dynamically retrieved, carried or explicitly modeled values. Carbon calculations use average grid intensity and GPU nameplate power and exclude facility PUE, other system power, embodied emissions and marginal-emissions effects. Published FLOPS are hardware specifications and do not predict achieved workload throughput.
 
 The `A10G / L4` tier deliberately groups comparable 24GB accelerators; Google Cloud `g2-standard-4` uses an NVIDIA L4 and is not an A10G SKU.
 
@@ -104,7 +104,7 @@ The companion practitioner brief should identify the exact release and commit us
 
 ## Visual position
 
-The utility uses the same restrained navy, teal, white space, and editorial typography as the related research papers and author site. It names its FinOps Framework alignment without using Foundation logos or implying Foundation endorsement. See `VISUAL-SYSTEM.md`.
+The utility uses the same restrained navy, teal, white space, and editorial typography as the related research papers and author site. It names its FinOps Framework alignment without using Foundation logos or implying Foundation endorsement.
 
 ## Feedback and corrections
 
