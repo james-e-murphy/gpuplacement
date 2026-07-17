@@ -3,7 +3,7 @@
 **Utility:** GPU Placement Explorer  
 **Methodology version:** 1.0.0  
 **Review date:** 2026-07-17  
-**Author:** REPLACE_WITH_FULL_PROFESSIONAL_NAME
+**Author:** James E. Murphy
 
 ## 1. Purpose
 
