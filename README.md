@@ -114,4 +114,4 @@ For a useful report, include the utility version, shared scenario URL or exporte
 
 ## Author
 
-REPLACE_WITH_FULL_PROFESSIONAL_NAME
+James E. Murphy
