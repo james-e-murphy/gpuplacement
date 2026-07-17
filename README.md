@@ -4,11 +4,11 @@ GPU Placement Explorer is an open source decision support utility for comparing 
 
 It is designed for FinOps practitioners, engineers, architects, procurement teams and sustainability stakeholders who need to expose the assumptions behind GPU placement decisions rather than compare hourly rates in isolation.
 
-## Current release candidate
+## Current release
 
-- Application: `index.html`, released as `gpu-placement-explorer-v1.0.0-rc3.3.html`
-- Status: release candidate; not yet the final submitted `v1.0.0`
-- Rate/source review date: 2026-07-16
+- Application: `index.html`, a single self contained file with no build step
+- Status: `v1.0.0`, the submitted release
+- Rate/source review date: 2026-07-17
 
 ## What the utility evaluates
 
@@ -22,7 +22,7 @@ It is designed for FinOps practitioners, engineers, architects, procurement team
 - Average grid carbon intensity
 - Published hardware throughput ratios
 
-## Rate evidence in rc3.3
+## Rate evidence in v1.0.0
 
 Every displayed rate is assigned an evidence basis. Hover over a point, inspect the mobile ranked view or export CSV to see the classification.
 
@@ -40,13 +40,13 @@ Live site: `REPLACE_WITH_FULL_CUSTOM_DOMAIN_URL`
 
 Source repository: `REPLACE_WITH_FULL_GITHUB_REPOSITORY_URL`
 
-Planned release tag: `v1.0.0`
+Release tag: `v1.0.0`
 
 ## Run locally
 
 The application is a self contained HTML file with no build step.
 
-1. Download `gpu-placement-explorer-v1.0.0-rc3.3.html`.
+1. Download `index.html` from the repository or the v1.0.0 release.
 2. Open it in a modern browser.
 3. For consistent local sharing and browser behavior, serve the directory with a simple local web server, for example:
 
