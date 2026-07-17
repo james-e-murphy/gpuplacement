@@ -212,5 +212,5 @@ A new release is required when any of the following materially changes:
 
 ## 10. Corrections and reproducibility reports
 
-Methodology questions, reproducibility issues and proposed source corrections should be sent to `REPLACE_WITH_FEEDBACK_EMAIL`. Reports should identify the utility version, calculation or assumption at issue, expected result, observed result and supporting evidence.
+Methodology questions, reproducibility issues and proposed source corrections should be sent to `feedback@gpuplacement.com`. Reports should identify the utility version, calculation or assumption at issue, expected result, observed result and supporting evidence.
 
