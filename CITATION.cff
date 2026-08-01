@@ -1,0 +1,23 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite it as below."
+type: software
+title: "GPU Placement Explorer"
+abstract: "An open source utility that compares cost, carbon, and commitment breakevens for GPU workloads across public cloud, GPU specialist cloud, colocation, and owned hardware options. Default rates are illustrations; replace them with current quotes before treating any comparison as real."
+authors:
+  - family-names: "Murphy"
+    given-names: "James E."
+    orcid: "https://orcid.org/0009-0001-2217-4306"
+version: "1.0.0"
+date-released: "2026-08-01"
+license: "Apache-2.0"
+repository-code: "https://github.com/james-e-murphy/gpuplacement"
+url: "https://gpuplacement.com"
+keywords:
+  - FinOps
+  - GPU
+  - workload placement
+  - cloud cost
+  - carbon
+  - unit economics
+  - commitment breakeven
+# doi: "10.5281/zenodo.XXXXXXX"
