@@ -36,9 +36,9 @@ An amber diamond marker on a chart point marks modeled, unverified or dynamic-sn
 
 ## Use the hosted utility
 
-Live site: `REPLACE_WITH_FULL_CUSTOM_DOMAIN_URL`
+Live site: `gpuplacement.com`
 
-Source repository: `REPLACE_WITH_FULL_GITHUB_REPOSITORY_URL`
+Source repository: `https://github.com/james-e-murphy/gpuplacement`
 
 Release tag: `v1.0.0`
 
@@ -108,7 +108,7 @@ The utility uses the same restrained navy, teal, white space, and editorial typo
 
 ## Feedback and corrections
 
-Questions, bug reports, source corrections and methodology feedback are welcome at `REPLACE_WITH_FEEDBACK_EMAIL`.
+Questions, bug reports, source corrections and methodology feedback are welcome at `contact@gpuplacement.com`.
 
 For a useful report, include the utility version, shared scenario URL or exported CSV where available, the affected provider/SKU or calculation, and a supporting primary source for pricing or data corrections.
 
