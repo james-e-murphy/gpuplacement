@@ -45,5 +45,5 @@ The utility should narrow the decision space and expose assumptions. It should n
 
 ## Reporting errors
 
-Report suspected calculation defects, stale provider data or unclear disclosures to `REPLACE_WITH_FEEDBACK_EMAIL`. Include the utility version and enough scenario detail to reproduce the issue.
+Report suspected calculation defects, stale provider data or unclear disclosures to contact@gpuplacement.com. Include the utility version and enough scenario detail to reproduce the issue.
 
